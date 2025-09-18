@@ -2,6 +2,17 @@
 import os
 import json
 from pathlib import Path
+from .utils.get_structure import get_structure
+def get_folder_structure(path: Path) -> dict:
+    structure = {}
+    for item in path.iterdir():  # iterate files and subfolders
+        if item.is_dir():
+            # Recursive call for subfolders
+            structure[item.name] = get_folder_structure(item)
+        else:
+            # File → just mark as None
+            structure[item.name] = None
+    return structure
 def main():
     print("Sage CLI running")
     #Ask the User for permission
@@ -19,6 +30,8 @@ def main():
                 # Optionally, write empty JSON object
                 file_path.write_text(json.dumps({}, indent=2))
                 print(f"Created {file_name}")
+                get_structure()
+                
             else:
                 print(f"{file_name} already exists")
     else: #if the user enters 'n', exit the program
