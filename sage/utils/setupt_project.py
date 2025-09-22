@@ -1,6 +1,5 @@
 from pathlib import Path
 import json
-
 def create_sage_folder() -> Path:
     """
     Create 'sage' folder in the current directory if it doesn't exist.

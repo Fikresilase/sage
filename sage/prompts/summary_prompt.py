@@ -1,1 +1,0 @@
-{"summaryprompt": "taking the role of a senior software engineer, provide a concise summary of each file, from the provided json data, in the project. Focus on key functionalities, purpose, and interactions with other files. Avoid unnecessary details.return the Formated summary JSON structure as it is replacing the null values by the file summary."}
