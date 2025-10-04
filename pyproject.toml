@@ -9,4 +9,4 @@ dependencies = [
 ]
 
 [project.scripts]
-sage = "sage.cli:app"
+sage = "sage.cli:main"
