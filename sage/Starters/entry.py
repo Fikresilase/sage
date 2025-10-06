@@ -137,7 +137,16 @@ def setup_sage(root_path: Path = Path(".")):
 
     def get_structure(path: Path):
         structure = {}
+        items = []
+        
+        # Collect all items first
         for item in path.iterdir():
+            items.append(item)
+        
+        # Sort items alphabetically by name
+        items.sort(key=lambda x: x.name.lower())
+        
+        for item in items:
             item_name = item.name
             
             # Skip if item matches ignore patterns
@@ -145,9 +154,11 @@ def setup_sage(root_path: Path = Path(".")):
                 continue
                 
             if item.is_dir():
+                # Recursively get structure for directories
                 structure[item_name] = get_structure(item)
             else:
                 structure[item_name] = "file"
+        
         return structure
 
     # Scan the parent directory (root_path) instead of sage_dir
@@ -156,8 +167,8 @@ def setup_sage(root_path: Path = Path(".")):
     # Create interface.json inside Sage folder
     interface_file = sage_dir / "interface.json"
     with interface_file.open("w", encoding="utf-8") as f:
-        json.dump(folder_structure, f, indent=4)
+        json.dump(folder_structure, f, indent=4, sort_keys=True)
 
-    console.print(f"[green]Created[/green] {interface_file} with filtered folder structure")
+    console.print(f"[green]Created[/green] {interface_file} with alphabetically sorted folder structure")
     console.print(f"[green]Recorded {len(folder_structure)} items from parent directory[/green]")
     console.print("[bold green]Sage setup complete![/bold green]")
