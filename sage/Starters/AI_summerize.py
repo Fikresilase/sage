@@ -5,12 +5,6 @@ from rich.console import Console
 console = Console()
 
 def analyze_and_summarize(model, interface_data):
-    """
-    Perform a two-step AI summarization:
-    1. Initial structure analysis based on interface_data.
-    2. Content review for files that requested 'provide'.
-    Returns final summaries for all files.
-    """
     # Step 1: initial analysis
     summaries = _analyze_structure(model, interface_data)
     
@@ -32,7 +26,7 @@ def _analyze_structure(model, interface_data):
     - summary: Brief description of what you think this file does based on its name and location
     - index: Assign a unique number to each file (start from 1)
     - dependents: Guess which other files might depend on this one (provide index numbers not the file names as comma-separated array elements)
-    - request: Only fill this if you're very uncertain about the file's purpose. Use "provide" if you need to see the file content.
+    - request: always include this key never leave it out but only fill this if you're uncertain about the file's purpose and which files might depend on it. Use "provide" if you need to see the file content.
 
     Return your response as a FLATTENED JSON object where keys are FULL FILE PATHS 
     and values are objects with the above structure.
