@@ -205,5 +205,7 @@ def provide_content_and_reanalyze(model, summaries, files_needing_content):
     except Exception as e:
         console.print(f"[red]Error in content review: {e}[/red]")
         return summaries
+
+
 if __name__ == "__main__":
     typer.run(summarize_files)
