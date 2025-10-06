@@ -4,28 +4,32 @@ import google.generativeai as genai
 import typer
 from rich.console import Console
 import os
+from sage.Starters.env_utils import get_api_key
 
 console = Console()
 
 def summarize_files(interface_file: Path = Path("Sage/interface.json")):
-    """Summarize files in the interface.json using Gemini AI with optimized logic"""
+    """Summarize files in the interface.json using AI with optimized logic"""
     
-    # Check if .env exists and get API key
-    env_file = Path(".env")
-    if not env_file.exists():
-        console.print("[red]Error: .env file not found[/red]")
-        return
+    # # Check if .env exists and get API key
+    # env_file = Path(".env")
+    # if not env_file.exists():
+    #     console.print("[red]Error: .env file not found[/red]")
+    #     return
     
-    # Load SAGE_API_KEY from .env
-    env_content = env_file.read_text(encoding="utf-8")
-    api_key = None
-    for line in env_content.splitlines():
-        if line.startswith("SAGE_API_KEY="):
-            api_key = line.split("=", 1)[1].strip()
-            break
+    # # Load SAGE_API_KEY from .env
+    # env_content = env_file.read_text(encoding="utf-8")
+    # api_key = None
+    # for line in env_content.splitlines():
+    #     if line.startswith("SAGE_API_KEY="):
+    #         api_key = line.split("=", 1)[1].strip()
+    #         break
     
+    # if not api_key:
+    #     console.print("[red]Error: SAGE_API_KEY not found in .env file[/red]")
+    #     return
+    api_key = get_api_key()
     if not api_key:
-        console.print("[red]Error: SAGE_API_KEY not found in .env file[/red]")
         return
     
     # Check if interface.json exists
@@ -34,7 +38,7 @@ def summarize_files(interface_file: Path = Path("Sage/interface.json")):
         return
     
     # Ask user if they want to summarize
-    choice = typer.prompt("Do you want to summarize your files? (yes/no)", default="no")
+    choice = typer.prompt("Do you want to summarize your files? (y/n)", default="n")
     
     if choice.strip().lower() not in ["y", "yes"]:
         console.print("[yellow]Skipping file summarization...[/yellow]")
