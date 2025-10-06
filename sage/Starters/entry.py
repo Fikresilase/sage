@@ -1,6 +1,7 @@
 from pathlib import Path
 import typer
 import json
+import re
 from rich.console import Console
 
 console = Console()
@@ -14,11 +15,38 @@ def setup_sage(root_path: Path = Path(".")):
 
     # Ensure .env file exists
     env_file = root_path / ".env"
-    if not env_file.exists():
+    env_content = ""
+    
+    if env_file.exists():
+        env_content = env_file.read_text(encoding="utf-8")
+        console.print(f"[cyan]Found[/cyan] {env_file}")
+    else:
         env_file.touch()
         console.print(f"[green]Created[/green] {env_file}")
+
+    # Check if SAGE_API_KEY exists in .env
+    sage_api_key_pattern = r'^\s*SAGE_API_KEY\s*=\s*[^\s#]+'
+    has_sage_api_key = re.search(sage_api_key_pattern, env_content, re.MULTILINE)
+
+    if not has_sage_api_key:
+        console.print("[yellow]SAGE_API_KEY not found in .env file[/yellow]")
+        sage_api_key = typer.prompt("Please enter your SAGE_API_KEY (input will be visible)")
+        
+        if sage_api_key.strip():
+            # Add SAGE_API_KEY to .env content
+            if env_content and not env_content.endswith('\n'):
+                env_content += '\n'
+            env_content += f"SAGE_API_KEY={sage_api_key}\n"
+            
+            # Write back to .env file
+            with env_file.open("w", encoding="utf-8") as f:
+                f.write(env_content)
+            
+            console.print("[green]SAGE_API_KEY added to .env file[/green]")
+        else:
+            console.print("[yellow]No SAGE_API_KEY provided. You'll need to add it manually to .env[/yellow]")
     else:
-        console.print(f"[cyan]Found[/cyan] {env_file}")
+        console.print("[green]SAGE_API_KEY found in .env file[/green]")
 
     # Ensure Sage folder exists
     sage_dir = root_path / "Sage"
