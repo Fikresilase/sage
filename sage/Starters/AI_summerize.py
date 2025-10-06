@@ -21,6 +21,7 @@ def analyze_and_summarize(model, interface_data):
 def _analyze_structure(model, interface_data):
     system_prompt = """
     Analyze this project structure and provide summaries for EVERY file in the structure.
+    and also add a "command" key with an array value like "command":[], this is not a file but a command to run in terminal for later communications.
 
     For EACH file (including nested files), provide:
     - summary: Brief description of what you think this file does based on its name and location
@@ -32,6 +33,7 @@ def _analyze_structure(model, interface_data):
     and values are objects with the above structure.
 
     IMPORTANT: Include EVERY file. Only use "request": "provide" when genuinely uncertain.
+    dont include a a square bracket [] just return the json as it is an object with key value pairs.
     """
     
     full_prompt = f"{system_prompt}\n\nProject Structure:\n{json.dumps(interface_data, indent=2)}\n\nProvide your analysis as JSON:"
@@ -77,6 +79,7 @@ def _provide_content_and_reanalyze(model, summaries, files_needing_content):
     - dependents: Update based on imports/references
     - request: Keep empty string "" unless you still need content
     Keep same index numbers. Return COMPLETE updated summaries for ALL files.
+    but dont index the command key it not a file but a command exchange interface to run in terminal for later communications.
     """
     
     full_prompt = f"{system_prompt}\n\nCurrent Summaries:\n{json.dumps(summaries, indent=2)}\n\nFile Contents:\n{json.dumps(file_contents, indent=2)}\n\nProvide updated COMPLETE summaries as JSON:"
