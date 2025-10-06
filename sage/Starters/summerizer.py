@@ -8,7 +8,7 @@ import os
 console = Console()
 
 def summarize_files(interface_file: Path = Path("Sage/interface.json")):
-    """Summarize files in the interface.json using Gemini AI"""
+    """Summarize files in the interface.json using Gemini AI with optimized logic"""
     
     # Check if .env exists and get API key
     env_file = Path(".env")
@@ -53,35 +53,167 @@ def summarize_files(interface_file: Path = Path("Sage/interface.json")):
     
     console.print("[cyan]Starting file summarization with Gemini AI...[/cyan]")
     
-    # Configure Gemini
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.5-flash")
+    try:
+        # Configure Gemini with gemini-2.5-flash
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        console.print("[green]Using model: gemini-2.5-flash[/green]")
+            
+    except Exception as e:
+        console.print(f"[red]Error configuring Gemini: {e}[/red]")
+        return
     
     # Load interface data
     with interface_file.open("r", encoding="utf-8") as f:
         interface_data = json.load(f)
     
-    # Get all file paths recursively
-    file_paths = get_all_file_paths(interface_data, Path("."))
+    console.print("[cyan]Analyzing project structure with Gemini AI...[/cyan]")
     
-    if not file_paths:
-        console.print("[yellow]No files found to summarize[/yellow]")
-        return
+    # First pass: Provide only interface.json to AI for initial analysis
+    initial_summaries = analyze_structure_with_gemini(model, interface_data)
     
-    console.print(f"[cyan]Found {len(file_paths)} files to process[/cyan]")
+    # Check if any files need content review
+    files_needing_content = get_files_needing_content(initial_summaries)
     
-    # Process files with Gemini
-    processed_files = process_files_with_gemini(model, file_paths, interface_data)
+    # Second pass: Provide content for files that need it
+    if files_needing_content:
+        console.print(f"[cyan]Providing content for {len(files_needing_content)} files that need review...[/cyan]")
+        final_summaries = provide_content_and_reanalyze(model, initial_summaries, files_needing_content)
+    else:
+        final_summaries = initial_summaries
     
     # Update interface.json with summaries
-    update_interface_with_summaries(interface_data, processed_files)
+    update_interface_with_summaries(interface_data, final_summaries)
     
     # Save updated interface.json
     with interface_file.open("w", encoding="utf-8") as f:
         json.dump(interface_data, f, indent=4)
     
     console.print("[bold green]File summarization complete![/bold green]")
-    console.print(f"[green]Updated {len(processed_files)} files in interface.json[/green]")
+    console.print(f"[green]Updated interface.json with summaries[/green]")
+
+def analyze_structure_with_gemini(model, interface_data):
+    """Analyze the project structure using only interface.json"""
+    
+    system_prompt = """
+    Analyze this project structure and provide summaries for EVERY file in the structure.
+    
+    For EACH file (including nested files), provide:
+    - summary: Brief description of what you think this file does based on its name and location
+    - index: Assign a unique number to each file (start from 1)
+    - dependents: Guess which other files might depend on this one (provide index numbers not the file names as comma-separated array elements)
+    - request: Only fill this if you're very uncertain about the file's purpose. Use "provide" if you need to see the file content.
+    
+    Return your response as a FLATTENED JSON object where keys are FULL FILE PATHS (including nested paths like "src/App.tsx") 
+    and values are objects with the above structure.
+    
+    IMPORTANT: You MUST include EVERY file in the structure. Do not skip any files.
+    Be smart about guessing dependencies based on file names and folder structure.
+    Only use "request": "provide" when you genuinely cannot guess the file's purpose.
+    """
+    
+    full_prompt = f"""
+    {system_prompt}
+    
+    Project Structure:
+    {json.dumps(interface_data, indent=2)}
+    
+    Provide your analysis as a FLATTENED JSON where keys are full file paths:
+    """
+    
+    try:
+        response = model.generate_content(full_prompt)
+        response_text = response.text.strip()
+        
+        # Extract JSON from response
+        if "```json" in response_text:
+            json_str = response_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_text:
+            json_str = response_text.split("```")[1].split("```")[0].strip()
+        else:
+            json_str = response_text
+        
+        summaries = json.loads(json_str)
+        console.print(f"[green]✓ Initial structure analysis complete - found {len(summaries)} files[/green]")
+        return summaries
+        
+    except Exception as e:
+        console.print(f"[red]Error in structure analysis: {e}[/red]")
+        console.print(f"[yellow]Response was: {response_text}[/yellow]")
+        return {}
+
+def get_files_needing_content(summaries):
+    """Get list of files that need content review"""
+    files_needing_content = []
+    for file_path, summary_data in summaries.items():
+        if summary_data.get("request") == "provide":
+            files_needing_content.append(file_path)
+    
+    console.print(f"[cyan]Found {len(files_needing_content)} files needing content review[/cyan]")
+    return files_needing_content
+
+def provide_content_and_reanalyze(model, summaries, files_needing_content):
+    """Provide file content for files that need it and get updated summaries"""
+    
+    # Read content for files that need review
+    file_contents = {}
+    for file_path in files_needing_content:
+        path_obj = Path(file_path)
+        if path_obj.exists():
+            try:
+                content = path_obj.read_text(encoding="utf-8", errors="ignore")
+                file_contents[file_path] = content
+                console.print(f"[green]✓ Read content for {file_path}[/green]")
+            except Exception as e:
+                console.print(f"[yellow]⚠ Could not read {file_path}: {e}[/yellow]")
+                file_contents[file_path] = ""
+        else:
+            console.print(f"[yellow]⚠ File not found: {file_path}[/yellow]")
+            file_contents[file_path] = ""
+    
+    # Create prompt for content review
+    system_prompt = """
+    Review these files that needed additional content and update your summaries.
+    For each file, update:
+    - summary: Based on the actual file content
+    - dependents: Update based on imports, requires, or references found in the content
+    - request: Always include this key. never leave it unincluded Leave it as empty string "" unless you're very uncertain about the file's purpose and need to see the content, then use "provide"
+    
+    Keep the same index numbers as before.
+    Return the COMPLETE updated summaries for ALL files (not just the ones reviewed).
+    """
+    
+    full_prompt = f"""
+    {system_prompt}
+    
+    Current Summaries (all files):
+    {json.dumps(summaries, indent=2)}
+    
+    File Contents (only for files needing review):
+    {json.dumps(file_contents, indent=2)}
+    
+    Provide updated COMPLETE summaries as JSON:
+    """
+    
+    try:
+        response = model.generate_content(full_prompt)
+        response_text = response.text.strip()
+        
+        # Extract JSON from response
+        if "```json" in response_text:
+            json_str = response_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_text:
+            json_str = response_text.split("```")[1].split("```")[0].strip()
+        else:
+            json_str = response_text
+        
+        updated_summaries = json.loads(json_str)
+        console.print("[green]✓ Content review complete[/green]")
+        return updated_summaries
+        
+    except Exception as e:
+        console.print(f"[red]Error in content review: {e}[/red]")
+        return summaries
 
 def mark_files_unsummarized(data):
     """Recursively mark all files as unsummarized"""
@@ -91,121 +223,30 @@ def mark_files_unsummarized(data):
         elif isinstance(value, dict):
             mark_files_unsummarized(value)
 
-def get_all_file_paths(data, current_path: Path):
-    """Recursively get all file paths from interface data"""
-    file_paths = []
-    
-    for key, value in data.items():
-        if value == "file":
-            file_paths.append(current_path / key)
-        elif isinstance(value, dict):
-            file_paths.extend(get_all_file_paths(value, current_path / key))
-    
-    return file_paths
-
-def process_files_with_gemini(model, file_paths, interface_data):
-    """Process files with Gemini AI and return summaries"""
-    processed_files = {}
-    file_index = 1
-    
-    for file_path in file_paths:
-        if not file_path.exists():
-            console.print(f"[yellow]Warning: File {file_path} not found, skipping...[/yellow]")
-            continue
-        
-        console.print(f"[cyan]Processing: {file_path}[/cyan]")
-        
-        try:
-            # Read file content
-            file_content = file_path.read_text(encoding="utf-8", errors="ignore")
-            
-            # Prepare system prompt
-            system_prompt = f"""
-            Analyze the following file and provide a structured summary.
-            
-            File: {file_path}
-            Content:
-            {file_content}
-            
-            Current interface.json structure (for context):
-            {json.dumps(interface_data, indent=2)}
-            
-            Provide your response as a JSON object with the following structure:
-            {{
-                "summary": "Brief description of what this file does (2-3 sentences)",
-                "index": "{file_index}",
-                "dependents": "List of index numbers of files that depend on this file (comma-separated, or empty if none)",
-                "request": ""
-            }}
-            
-            Be concise and accurate in your analysis.
-            """
-            
-            # Call Gemini API
-            response = model.generate_content(system_prompt)
-            
-            # Parse response
-            try:
-                # Try to extract JSON from response
-                response_text = response.text.strip()
-                if "```json" in response_text:
-                    # Extract JSON from code block
-                    json_str = response_text.split("```json")[1].split("```")[0].strip()
-                elif "```" in response_text:
-                    # Extract from any code block
-                    json_str = response_text.split("```")[1].split("```")[0].strip()
-                else:
-                    json_str = response_text
-                
-                summary_data = json.loads(json_str)
-                
-                # Validate required fields
-                if all(k in summary_data for k in ["summary", "index", "dependents", "request"]):
-                    processed_files[str(file_path)] = summary_data
-                    console.print(f"[green]✓ Successfully processed {file_path}[/green]")
-                else:
-                    console.print(f"[yellow]⚠ Incomplete response for {file_path}, using fallback[/yellow]")
-                    processed_files[str(file_path)] = {
-                        "summary": "Failed to generate summary",
-                        "index": str(file_index),
-                        "dependents": "",
-                        "request": ""
-                    }
-                    
-            except json.JSONDecodeError:
-                console.print(f"[yellow]⚠ Failed to parse JSON response for {file_path}, using fallback[/yellow]")
-                processed_files[str(file_path)] = {
-                    "summary": "Failed to parse AI response",
-                    "index": str(file_index),
-                    "dependents": "",
-                    "request": ""
-                }
-            
-            file_index += 1
-            
-        except Exception as e:
-            console.print(f"[red]Error processing {file_path}: {str(e)}[/red]")
-            processed_files[str(file_path)] = {
-                "summary": f"Error: {str(e)}",
-                "index": str(file_index),
-                "dependents": "",
-                "request": ""
-            }
-            file_index += 1
-    
-    return processed_files
-
-def update_interface_with_summaries(data, processed_files, current_path: Path = Path(".")):
+def update_interface_with_summaries(data, summaries, current_path: Path = Path(".")):
     """Recursively update interface data with file summaries"""
     for key, value in data.items():
         if value == "file":
-            file_key = str(current_path / key)
-            if file_key in processed_files:
-                data[key] = processed_files[file_key]
+            # Create the full file path as it would appear in the flattened summaries
+            file_key = str(current_path / key).replace("\\", "/")
+            
+            if file_key in summaries:
+                # Ensure request is empty if it was filled
+                summary_data = summaries[file_key].copy()
+                if summary_data.get("request") == "provide":
+                    summary_data["request"] = ""
+                data[key] = summary_data
             else:
-                data[key] = "unsummarized"
+                # If not found in summaries, check without current path (for root files)
+                if key in summaries:
+                    summary_data = summaries[key].copy()
+                    if summary_data.get("request") == "provide":
+                        summary_data["request"] = ""
+                    data[key] = summary_data
+                else:
+                    data[key] = "unsummarized"
         elif isinstance(value, dict):
-            update_interface_with_summaries(value, processed_files, current_path / key)
+            update_interface_with_summaries(value, summaries, current_path / key)
 
 if __name__ == "__main__":
     typer.run(summarize_files)
