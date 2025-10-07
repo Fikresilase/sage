@@ -77,10 +77,10 @@ def _analyze_structure(model, interface_data):
         response_text = response.text.strip()
         json_str = _extract_json(response_text)
         summaries = json.loads(json_str)
-        console.print(f"[green]✓ Initial structure analysis complete - found {len(summaries)} files[/green]")
-        console.print("[blue]--- Full AI response (raw) ---[/blue]")
-        console.print(response.text)
-        console.print("[blue]--- end response ---[/blue]")
+        # console.print(f"[green]✓ Initial structure analysis complete - found {len(summaries)} files[/green]")
+        # console.print("[blue]--- Full AI response (raw) ---[/blue]")
+        # console.print(response.text)
+        # console.print("[blue]--- end response ---[/blue]")
         return summaries
     except Exception as e:
         console.print(f"[red]Error in structure analysis: {e}[/red]")
