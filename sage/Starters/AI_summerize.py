@@ -31,7 +31,7 @@ def _analyze_structure(model, interface_data):
    - `"summary"`: short plain-language description (one sentence) of what the file likely does, inferred from its name and path.
    - `"index"`: unique integer identifier. Indices MUST start at `1` and increase by `1` for each file. Assign indices deterministically by sorting all file paths in lexicographic (UTF-8) order and numbering in that order.
    - `"dependents"`: an array of integers referencing **index** values of other files in this same JSON that likely depend on or import/use this file. Use indices only, not file names. If none are expected, use an empty array `[]`.
-   - `"request"`: must be either the empty string `""` OR the exact string `"provide"`. Use `"provide"` **only** if you genuinely cannot infer the file's purpose or dependencies and therefore need the file contents.
+   - `"request"`: must be either the empty object `{}` OR the exact string `"provide"`. Use `"provide"` **only** if you cannot infer the file's purpose or dependencies and therefore need the file contents.
 
    Additional rules for file entries:
    - Do NOT invent dependencies. If uncertain, leave `"dependents": []` and set `"request": "provide"`.
@@ -58,9 +58,9 @@ def _analyze_structure(model, interface_data):
 
 6. Examples (for clarity only; do not include these in the final output):
 {
-  ".env": { "summary":"Environment variables.", "index":1, "dependents":[2,3], "request":"" },
-  "package.json": { "summary":"Node project metadata.", "index":2, "dependents":[3], "request":"" },
-  "src/index.js": { "summary":"App entry point.", "index":3, "dependents":[], "request":"" },
+  ".env": { "summary":"Environment variables.", "index":1, "dependents":[2,3], "request":{} },
+  "package.json": { "summary":"Node project metadata.", "index":2, "dependents":[3], "request":{} },
+  "src/index.js": { "summary":"App entry point.", "index":3, "dependents":[], "request":{} },
   "command": {
     "summary":"Project shell commands.",
     "terminal":"powershell",
@@ -114,7 +114,7 @@ def _provide_content_and_reanalyze(model, summaries, files_needing_content):
     Update:
     - summary: Based on actual file content
     - dependents: Update based on imports/references
-    - request: Keep empty string "" unless you still need content
+    - request: Keep empty object {} unless you still need content
     Keep same index numbers. Return COMPLETE updated summaries for ALL files.
     but dont index the command key it not a file but a command exchange interface to run in terminal for later communications.
     """
