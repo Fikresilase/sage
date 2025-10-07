@@ -21,7 +21,7 @@ def analyze_and_summarize(model, interface_data):
 def _analyze_structure(model, interface_data):
     system_prompt = """
     Analyze this project structure and provide summaries for EVERY file in the structure.
-    and also add a "command" key with an array value like "command":[], this is not a file but a command to run in terminal for later communications.
+    and also add a "command" key with an array value like "command":[], this is not a file but a command to run in terminal for later communications. include it in the root folder where the .env file is located.
 
     For EACH file (including nested files), provide:
     - summary: Brief description of what you think this file does based on its name and location
