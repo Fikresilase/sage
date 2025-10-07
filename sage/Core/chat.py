@@ -22,18 +22,21 @@ def chat():
     # Get API key first
     api_key = get_api_key()
     if not api_key:
-        console.print("[red]❌ Cannot start chat without API key[/red]")
+        console.print("[bold red]❌ Cannot start chat without API key[/bold red]")
         return
     
-    console.print(Panel.fit(
-        "[bold green]💬 Sage Chat Interface[/bold green]\nType 'exit', 'quit', or press Ctrl+C to leave",
-        border_style="green",
-        padding=(1, 2)
-    ))
+    console.print(
+        Panel.fit(
+            "[bold green]💬 Sage Chat Interface[/bold green]\nType 'exit', 'quit', or press Ctrl+C to leave",
+            border_style="green",
+            padding=(1, 2)
+        )
+    )
+    console.print()
     
     while True:
         try:
-            # Get user input
+            # Get user input using a clean, single-line prompt
             user_message = _get_user_input()
             
             if not user_message:
@@ -41,10 +44,13 @@ def chat():
                 break
                 
             if user_message.lower() in ['exit', 'quit', 'bye']:
-                console.print("[yellow]👋 Goodbye![/yellow]")
+                console.print("[green]👋 Goodbye![/green]")
                 break
+
+            # Immediately display the user's message in a final, clean box
+            _display_user_message_in_box(user_message)
             
-            # Show processing animation and get AI response
+            # Get AI response with a spinner
             response = _get_ai_response_with_spinner(user_message, api_key)
             
             if response:
@@ -55,7 +61,7 @@ def chat():
             console.print()
             
         except KeyboardInterrupt:
-            console.print("\n[yellow]👋 Chat session ended by user[/yellow]")
+            console.print("\n[green]👋 Chat session ended by user[/green]")
             break
         except Exception as e:
             console.print(f"[red]❌ Error in chat: {e}[/red]")
@@ -63,32 +69,15 @@ def chat():
 
 def _get_user_input() -> str:
     """
-    Display beautiful glowing textbox and get user input.
+    Clean input prompt that visually matches the response boxes.
     
     Returns:
         str: User's input text
     """
-    chat_panel = Panel(
-        Align.center(
-            Text("💬 Type your message below and press ENTER to send", 
-                 style="bold cyan", justify="center")
-        ),
-        title="✨ Sage Chat",
-        title_align="center",
-        border_style="bright_blue",
-        box=box.DOUBLE,
-        padding=(1, 2),
-        style="bright_blue on black",
-        subtitle="Type 'exit' to leave • Press ENTER to submit"
-    )
-    
-    console.print()
-    console.print(chat_panel)
-    console.print()
-    
+    # Simple, clean prompt that matches the aesthetic
     try:
         user_input = console.input(
-            Text("📝 ", style="bold green") + 
+            Text("💬 ", style="bold green") + 
             Text("You: ", style="bold cyan") + 
             Text("", style="bright_white")
         )
@@ -96,9 +85,24 @@ def _get_user_input() -> str:
     except (KeyboardInterrupt, EOFError):
         return ""
 
+def _display_user_message_in_box(message: str):
+    """
+    Displays the user's final message in a complete, clean box.
+    """
+    console.print(
+        Panel(
+            Text(message, style="white"),
+            title="[bold green]👤 You[/bold green]",
+            border_style="green",
+            title_align="left",
+            padding=(1, 2),
+            box=box.ROUNDED
+        )
+    )
+
 def _get_ai_response_with_spinner(user_message: str, api_key: str) -> str:
     """
-    Get AI response with a beautiful loading spinner.
+    Get AI response with a loading spinner.
     
     Args:
         user_message: User's input message
@@ -107,8 +111,9 @@ def _get_ai_response_with_spinner(user_message: str, api_key: str) -> str:
     Returns:
         str: AI response text
     """
+    # Show processing with an animated spinner
     with Status(
-        "[bold cyan]🤖 Sage is thinking...[/bold cyan]", 
+        "[bold green]🤖 Sage is thinking...[/bold green]", 
         spinner="dots",
         spinner_style="green"
     ) as status:
@@ -118,15 +123,15 @@ def _get_ai_response_with_spinner(user_message: str, api_key: str) -> str:
 
 def _display_ai_response(response: str):
     """
-    Display AI response in a beautiful panel.
+    Display AI response in a beautiful and clean panel.
     
     Args:
         response: AI response text to display
     """
     console.print(
         Panel(
-            f"[bold white]{response}[/bold white]",
-            title="🧠 Sage Response",
+            Text(response, style="white"),
+            title="[bold green]🧠 Sage[/bold green]",
             border_style="green",
             title_align="left",
             padding=(1, 2),
