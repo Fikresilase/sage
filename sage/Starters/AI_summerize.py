@@ -20,20 +20,54 @@ def analyze_and_summarize(model, interface_data):
 
 def _analyze_structure(model, interface_data):
     system_prompt = """
-    Analyze this project structure and provide summaries for EVERY file in the structure.
-    and also add a "command" key with an array value like "command":[], this is not a file but a command to run in terminal for later communications. include it in the root folder where the .env file is located.
+    You are given a project directory tree. Produce a single, flattened JSON object and output **only** that JSON object (no extra text, no explanation). Follow these rules exactly.
 
-    For EACH file (including nested files), provide:
-    - summary: Brief description of what you think this file does based on its name and location
-    - index: Assign a unique number to each file (start from 1)
-    - dependents: Guess which other files might depend on this one (provide index numbers not the file names as comma-separated array elements)
-    - request: always include this key never leave it out but only fill this if you're uncertain about the file's purpose and which files might depend on it. Use "provide" if you need to see the file content.
+1. Top-level structure
+   - The JSON object's keys are the **full file paths** (relative paths including subfolders) for **every file** in the project. Do NOT include directories as keys. Include hidden files (e.g. `.env`, `.gitignore`) if present.
+   - Add one synthetic top-level key named exactly `"command"` (this is NOT a file). Place it at the root of the JSON object.
 
-    Return your response as a FLATTENED JSON object where keys are FULL FILE PATHS 
-    and values are objects with the above structure.
+2. File value schema (applies to every file key)
+   Each file key's value MUST be an object with exactly these four keys (no extra keys):
+   - `"summary"`: short plain-language description (one sentence) of what the file likely does, inferred from its name and path.
+   - `"index"`: unique integer identifier. Indices MUST start at `1` and increase by `1` for each file. Assign indices deterministically by sorting all file paths in lexicographic (UTF-8) order and numbering in that order.
+   - `"dependents"`: an array of integers referencing **index** values of other files in this same JSON that likely depend on or import/use this file. Use indices only, not file names. If none are expected, use an empty array `[]`.
+   - `"request"`: must be either the empty string `""` OR the exact string `"provide"`. Use `"provide"` **only** if you genuinely cannot infer the file's purpose or dependencies and therefore need the file contents.
 
-    IMPORTANT: Include EVERY file. Only use "request": "provide" when genuinely uncertain.
-    dont include a a square bracket [] just return the json as it is an object with key value pairs.
+   Additional rules for file entries:
+   - Do NOT invent dependencies. If uncertain, leave `"dependents": []` and set `"request": "provide"`.
+   - Do not include any other fields besides the four required keys.
+   - All strings must use double quotes.
+
+3. `"command"` key schema (exact):
+   The `"command"` value MUST be an object with these keys:
+   - `"summary"`: one-sentence description of the purpose of the commands.
+   - `"terminal"`: a short identifier of shell type (`"powershell"`, `"bash"`, `"cmd"`, etc.). If unknown, prefer `"bash"`.
+   - `"platform"`: one of `"windows"`, `"linux"`, `"mac"`, or `""` if unknown.
+   - `"commands"`: an array. If you can infer one or more safe, likely-to-run commands, list them as strings. If you cannot infer any commands with confidence, set `"commands": []` (empty array). The `commands` key must always exist.
+
+4. Determinism & validation
+   - Indices must be consecutive integers starting at 1 and assigned by lexicographic ordering of file paths.
+   - Every value in `"dependents"` must be a valid index that appears somewhere in this JSON. Do not reference the `"command"` key by index.
+   - The JSON must be valid, parseable, and use only JSON primitives (objects, arrays, numbers, strings, booleans, null).
+
+5. Output rules
+   - Return **only** the JSON object text. No prose, no headings, no extra code fences before or after the JSON.
+   - Use double quotes for all JSON strings.
+   - Include EVERY file present in the tree. Do not omit files.
+   - Use `"request": "provide"` sparingly — only when you truly cannot infer purpose/dependencies from name/path.
+
+6. Examples (for clarity only; do not include these in the final output):
+{
+  ".env": { "summary":"Environment variables.", "index":1, "dependents":[2,3], "request":"" },
+  "package.json": { "summary":"Node project metadata.", "index":2, "dependents":[3], "request":"" },
+  "src/index.js": { "summary":"App entry point.", "index":3, "dependents":[], "request":"" },
+  "command": {
+    "summary":"Project shell commands.",
+    "terminal":"powershell",
+    "platform":"windows",
+    "commands":[]
+  }
+}
     """
     
     full_prompt = f"{system_prompt}\n\nProject Structure:\n{json.dumps(interface_data, indent=2)}\n\nProvide your analysis as JSON:"
@@ -44,6 +78,9 @@ def _analyze_structure(model, interface_data):
         json_str = _extract_json(response_text)
         summaries = json.loads(json_str)
         console.print(f"[green]✓ Initial structure analysis complete - found {len(summaries)} files[/green]")
+        console.print("[blue]--- Full AI response (raw) ---[/blue]")
+        console.print(response.text)
+        console.print("[blue]--- end response ---[/blue]")
         return summaries
     except Exception as e:
         console.print(f"[red]Error in structure analysis: {e}[/red]")
