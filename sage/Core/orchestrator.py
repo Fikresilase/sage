@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from rich.console import Console
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 import subprocess
 import os
 
@@ -73,6 +73,12 @@ class Orchestrator:
                         result = self._execute_command(cmd)
                         results.append(f"Command: {cmd}\nResult: {result}")
                     return "\n".join(results)
+            
+            # Update interface for summary/dependents changes
+            for file_path, file_data in ai_response.items():
+                if file_path not in ["text", "command"] and isinstance(file_data, dict):
+                    if self._has_interface_changes(file_path, file_data):
+                        self._update_interface_file(file_path, file_data)
             
             # If no special operations, just return the text
             return user_message
@@ -152,14 +158,43 @@ class Orchestrator:
         except Exception as e:
             return f"Command execution failed: {str(e)}"
     
+    def _has_interface_changes(self, file_path: str, new_data: Dict) -> bool:
+        """Check if summary or dependents actually changed."""
+        if not self.interface_file.exists():
+            return True
+        
+        try:
+            with open(self.interface_file, 'r', encoding='utf-8') as f:
+                current_data = json.load(f)
+            
+            if file_path not in current_data:
+                return True  # New file
+            
+            current = current_data[file_path]
+            return (current.get("summary") != new_data.get("summary") or
+                    current.get("dependents") != new_data.get("dependents"))
+        except:
+            return True
+    
     def _update_interface_file(self, file_path: str, file_data: Dict):
-        """Update interface.json with new file data."""
+        """Update interface.json with only summary and dependents changes."""
         try:
             if self.interface_file.exists():
                 with open(self.interface_file, 'r', encoding='utf-8') as f:
                     interface_data = json.load(f)
                 
-                interface_data[file_path] = file_data
+                # Only update summary and dependents, preserve other data
+                if file_path in interface_data:
+                    if "summary" in file_data:
+                        interface_data[file_path]["summary"] = file_data["summary"]
+                    if "dependents" in file_data:
+                        interface_data[file_path]["dependents"] = file_data["dependents"]
+                    # Always clear request after processing
+                    interface_data[file_path]["request"] = {}
+                else:
+                    # For new files, add the entry but ensure request is cleared
+                    file_data["request"] = {}
+                    interface_data[file_path] = file_data
                 
                 with open(self.interface_file, 'w', encoding='utf-8') as f:
                     json.dump(interface_data, f, indent=2)
