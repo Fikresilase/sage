@@ -56,7 +56,7 @@ def _analyze_structure(model, interface_data):
    - Return **only** the JSON object text. No prose, no headings, no extra code fences before or after the JSON.
    - Use double quotes for all JSON strings.
    - Include EVERY file present in the tree. Do not omit files.
-   - Use `"request": "provide"` sparingly — only when you truly cannot infer purpose/dependencies from name/path.
+   - Use `"request": {"provide": {}}` sparingly — only when you truly cannot infer purpose/dependencies from name/path.
 
 6. Examples (for clarity only; do not include these in the final output):
 {
@@ -88,13 +88,11 @@ def _analyze_structure(model, interface_data):
         console.print(f"[red]Error in structure analysis: {e}[/red]")
         return {}
 
-
 def _get_files_needing_content(summaries):
     files = [path for path, data in summaries.items() 
              if isinstance(data, dict) and data.get("request") == "provide"]
     console.print(f"[cyan]Found {len(files)} files needing content review[/cyan]")
     return files
-
 
 def _provide_content_and_reanalyze(model, summaries, files_needing_content):
     file_contents = {}
