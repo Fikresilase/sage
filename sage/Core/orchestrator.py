@@ -20,11 +20,12 @@ class Orchestrator:
             ai_response: Parsed JSON response from AI
             
         Returns:
-            str: Response to display to user
+            str: Response to display to user (AI's text + program results)
         """
         try:
-            # Handle text response for display
-            user_message = ai_response.get("text", "")
+            # Store AI's text response
+            ai_text = ai_response.get("text", "")
+            program_results = []
             
             # Handle file operations
             for file_path, file_data in ai_response.items():
@@ -34,54 +35,56 @@ class Orchestrator:
                     if "provide" in request:
                         # Read file content and return to combiner
                         file_content = self._read_file(file_path)
-                        return f"File content for {file_path}:\n{file_content}"
+                        program_results.append(f"File content for {file_path}:\n{file_content}")
                     
                     elif "edit" in request:
                         # Edit file
                         result = self._edit_file(file_path, request["edit"])
                         if result:
                             self._update_interface_file(file_path, file_data)
-                            return f"✅ {file_path} edited successfully"
+                            program_results.append(f"✅ {file_path} edited successfully")
                         else:
-                            return f"❌ Failed to edit {file_path}"
+                            program_results.append(f"❌ Failed to edit {file_path}")
                     
                     elif "write" in request:
                         # Write new file
                         result = self._write_file(file_path, request["write"])
                         if result:
                             self._update_interface_file(file_path, file_data)
-                            return f"✅ {file_path} created successfully"
+                            program_results.append(f"✅ {file_path} created successfully")
                         else:
-                            return f"❌ Failed to create {file_path}"
+                            program_results.append(f"❌ Failed to create {file_path}")
                     
                     elif "delete" in request:
                         # Delete file
                         result = self._delete_file(file_path)
                         if result:
                             self._remove_from_interface(file_path)
-                            return f"✅ {file_path} deleted successfully"
+                            program_results.append(f"✅ {file_path} deleted successfully")
                         else:
-                            return f"❌ Failed to delete {file_path}"
+                            program_results.append(f"❌ Failed to delete {file_path}")
             
             # Handle command execution
             if "command" in ai_response:
                 cmd_data = ai_response["command"]
                 commands = cmd_data.get("commands", [])
                 if commands:
-                    results = []
                     for cmd in commands:
                         result = self._execute_command(cmd)
-                        results.append(f"Command: {cmd}\nResult: {result}")
-                    return "\n".join(results)
+                        program_results.append(f"Command: {cmd}\nResult: {result}")
             
-            # Update interface for summary/dependents changes
+            # Update interface for summary/dependents changes from full JSON
             for file_path, file_data in ai_response.items():
                 if file_path not in ["text", "command"] and isinstance(file_data, dict):
                     if self._has_interface_changes(file_path, file_data):
                         self._update_interface_file(file_path, file_data)
             
-            # If no special operations, just return the text
-            return user_message
+            # Combine AI text with program results
+            final_response = ai_text
+            if program_results:
+                final_response += "\n\n" + "\n".join(program_results)
+            
+            return final_response
             
         except Exception as e:
             return f"❌ Error in orchestrator: {str(e)}"
@@ -167,14 +170,72 @@ class Orchestrator:
             with open(self.interface_file, 'r', encoding='utf-8') as f:
                 current_data = json.load(f)
             
+            # Convert flat path to tree and check if file exists in tree
+            flat_key = file_path.replace('/', '_')
             if file_path not in current_data:
-                return True  # New file
+                # Check if file exists in tree structure
+                tree_path = self._find_in_tree(current_data, file_path.split('/'))
+                if tree_path is None:
+                    return True  # New file
+                else:
+                    current = tree_path
+            else:
+                current = current_data[file_path]
             
-            current = current_data[file_path]
             return (current.get("summary") != new_data.get("summary") or
                     current.get("dependents") != new_data.get("dependents"))
         except:
             return True
+    
+    def _find_in_tree(self, tree: Dict, path_parts: list) -> Dict:
+        """Find a file in the tree structure."""
+        current = tree
+        for part in path_parts:
+            if part in current:
+                current = current[part]
+            else:
+                return None
+        return current
+    
+    def _flat_to_tree(self, flat_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Convert flat file paths to tree structure."""
+        tree = {}
+        
+        for key, value in flat_data.items():
+            if key in ["text", "command"]:
+                tree[key] = value
+                continue
+                
+            # Split path into parts
+            parts = key.split('/')
+            current_level = tree
+            
+            # Navigate/create the tree structure
+            for i, part in enumerate(parts):
+                if i == len(parts) - 1:
+                    # Last part - this is the file
+                    current_level[part] = value
+                else:
+                    # Directory level
+                    if part not in current_level:
+                        current_level[part] = {}
+                    current_level = current_level[part]
+        
+        return tree
+    
+    def _merge_trees(self, target: Dict, source: Dict):
+        """Recursively merge source tree into target tree."""
+        for key, value in source.items():
+            if key in ["text", "command"]:
+                # Skip these special keys for file updates
+                continue
+                
+            if isinstance(value, dict) and key in target and isinstance(target[key], dict):
+                # Recursively merge dictionaries
+                self._merge_trees(target[key], value)
+            else:
+                # Update or add the value
+                target[key] = value
     
     def _update_interface_file(self, file_path: str, file_data: Dict):
         """Update interface.json with only summary and dependents changes."""
@@ -183,35 +244,70 @@ class Orchestrator:
                 with open(self.interface_file, 'r', encoding='utf-8') as f:
                     interface_data = json.load(f)
                 
-                # Only update summary and dependents, preserve other data
-                if file_path in interface_data:
-                    if "summary" in file_data:
-                        interface_data[file_path]["summary"] = file_data["summary"]
-                    if "dependents" in file_data:
-                        interface_data[file_path]["dependents"] = file_data["dependents"]
-                    # Always clear request after processing
-                    interface_data[file_path]["request"] = {}
-                else:
-                    # For new files, add the entry but ensure request is cleared
-                    file_data["request"] = {}
-                    interface_data[file_path] = file_data
+                # Convert flat path to tree structure for the update
+                tree_update = self._flat_to_tree({file_path: file_data})
+                
+                # Create update data with only summary and dependents
+                update_data = {}
+                if "summary" in file_data:
+                    update_data["summary"] = file_data["summary"]
+                if "dependents" in file_data:
+                    update_data["dependents"] = file_data["dependents"]
+                update_data["request"] = {}
+                
+                # Merge the tree update into existing interface data
+                self._merge_tree_update(interface_data, tree_update, update_data, file_path.split('/'))
                 
                 with open(self.interface_file, 'w', encoding='utf-8') as f:
                     json.dump(interface_data, f, indent=2)
         except Exception as e:
             console.print(f"[red]Error updating interface file: {e}[/red]")
     
+    def _merge_tree_update(self, target: Dict, source: Dict, update_data: Dict, path_parts: list):
+        """Merge specific file update into tree structure."""
+        current_target = target
+        current_source = source
+        
+        # Navigate to the correct level in both trees
+        for part in path_parts:
+            if part in current_source:
+                current_source = current_source[part]
+            
+            if part not in current_target:
+                current_target[part] = {}
+            current_target = current_target[part]
+        
+        # Apply the update data
+        for key, value in update_data.items():
+            current_target[key] = value
+    
     def _remove_from_interface(self, file_path: str):
-        """Remove file from interface.json."""
+        """Remove file from interface.json using tree structure."""
         try:
             if self.interface_file.exists():
                 with open(self.interface_file, 'r', encoding='utf-8') as f:
                     interface_data = json.load(f)
                 
-                if file_path in interface_data:
-                    del interface_data[file_path]
-                    
+                # Remove from tree structure
+                self._remove_from_tree(interface_data, file_path.split('/'))
+                
                 with open(self.interface_file, 'w', encoding='utf-8') as f:
                     json.dump(interface_data, f, indent=2)
         except Exception as e:
             console.print(f"[red]Error removing from interface file: {e}[/red]")
+    
+    def _remove_from_tree(self, tree: Dict, path_parts: list):
+        """Remove a file from tree structure."""
+        if len(path_parts) == 1:
+            # Last part - remove the file
+            if path_parts[0] in tree:
+                del tree[path_parts[0]]
+        else:
+            # Navigate deeper
+            current_part = path_parts[0]
+            if current_part in tree:
+                self._remove_from_tree(tree[current_part], path_parts[1:])
+                
+                # Clean up empty directories
+                if isinstance(tree[current_part], dict) and not tree[current_part]:
+                    del tree[current_part]

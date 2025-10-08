@@ -7,7 +7,7 @@ from .orchestrator import Orchestrator
 
 console = Console()
 
-# System prompt for the AI (keep your existing one)
+
 SYSTEM_PROMPT = """
 - you are Sage a senior developer in the terminal with full context of the project structure and files.
 to help with any programing task and any questions the user has about the project.
