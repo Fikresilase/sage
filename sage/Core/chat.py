@@ -9,7 +9,7 @@ from rich.live import Live
 from rich.status import Status
 import time
 
-from .combiner import get_ai_response
+from .combiner import Combiner  # Changed import
 from .env_util import get_api_key
 
 console = Console()
@@ -24,6 +24,9 @@ def chat():
     if not api_key:
         console.print("[bold red]❌ Cannot start chat without API key[/bold red]")
         return
+    
+    # Initialize combiner (which includes orchestrator)
+    combiner = Combiner(api_key)
     
     console.print(
         Panel.fit(
@@ -51,7 +54,7 @@ def chat():
             _display_user_message_in_box(user_message)
             
             # Get AI response with a spinner
-            response = _get_ai_response_with_spinner(user_message, api_key)
+            response = _get_ai_response_with_spinner(user_message, combiner)
             
             if response:
                 _display_ai_response(response)
@@ -68,13 +71,7 @@ def chat():
             break
 
 def _get_user_input() -> str:
-    """
-    Clean input prompt that visually matches the response boxes.
-    
-    Returns:
-        str: User's input text
-    """
-    # Simple, clean prompt that matches the aesthetic
+    """Clean input prompt that visually matches the response boxes."""
     try:
         user_input = console.input(
             Text("💬 ", style="bold green") + 
@@ -86,9 +83,7 @@ def _get_user_input() -> str:
         return ""
 
 def _display_user_message_in_box(message: str):
-    """
-    Displays the user's final message in a complete, clean box.
-    """
+    """Displays the user's final message in a complete, clean box."""
     console.print(
         Panel(
             Text(message, style="white"),
@@ -100,34 +95,19 @@ def _display_user_message_in_box(message: str):
         )
     )
 
-def _get_ai_response_with_spinner(user_message: str, api_key: str) -> str:
-    """
-    Get AI response with a loading spinner.
-    
-    Args:
-        user_message: User's input message
-        api_key: API key for Gemini
-        
-    Returns:
-        str: AI response text
-    """
-    # Show processing with an animated spinner
+def _get_ai_response_with_spinner(user_message: str, combiner: Combiner) -> str:
+    """Get AI response with a loading spinner."""
     with Status(
         "[bold green]🤖 Sage is thinking...[/bold green]", 
         spinner="dots",
         spinner_style="green"
     ) as status:
-        response = get_ai_response(user_message, api_key)
+        response = combiner.get_ai_response(user_message)
     
     return response
 
 def _display_ai_response(response: str):
-    """
-    Display AI response in a beautiful and clean panel.
-    
-    Args:
-        response: AI response text to display
-    """
+    """Display AI response in a beautiful and clean panel."""
     console.print(
         Panel(
             Text(response, style="white"),
