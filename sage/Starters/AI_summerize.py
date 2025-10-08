@@ -24,7 +24,7 @@ def _analyze_structure(model, interface_data):
 
 1. Top-level structure
    - The JSON object's keys are the **full file paths** (relative paths including subfolders) for **every file** in the project. Do NOT include directories as keys. Include hidden files (e.g. `.env`, `.gitignore`) if present.
-   - Add one synthetic top-level key named exactly `"command"` (this is NOT a file). Place it at the root of the JSON object.
+   - 
 
 2. File value schema (applies to every file key)
    Each file key's value MUST be an object with exactly these four keys (no extra keys):
