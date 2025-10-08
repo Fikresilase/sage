@@ -183,9 +183,21 @@ def setup_sage(root_path: Path = Path(".")):
     # Scan the parent directory (root_path) instead of sage_dir
     folder_structure = get_structure(root_path)
 
+    # Create the complete interface structure with the two new root keys
+    complete_interface = {
+        "command": {
+            "summary": "",
+            "terminal": "",
+            "platform": "",
+            "commands": []
+        },
+        "text": "this is a place holder for your response.",
+        **folder_structure  # This unpacks the folder structure into the root level
+    }
+
     # Create/update interface.json inside Sage folder
     with interface_file.open("w", encoding="utf-8") as f:
-        json.dump(folder_structure, f, indent=4, sort_keys=True)
+        json.dump(complete_interface, f, indent=4, sort_keys=True)
 
     console.print(f"[green]{'Updated' if is_sage_installed else 'Created'}[/green] {interface_file} with alphabetically sorted folder structure")
     console.print(f"[green]Recorded {len(folder_structure)} items from parent directory[/green]")
