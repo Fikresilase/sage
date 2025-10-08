@@ -24,7 +24,7 @@ def _analyze_structure(model, interface_data):
 
 1. Top-level structure
    - The JSON object's keys are the **full file paths** (relative paths including subfolders) for **every file** in the project. Do NOT include directories as keys. Include hidden files (e.g. `.env`, `.gitignore`) if present.
-   - 
+   - and there are two special keys: `"command"`: describes the project's commands and platform. and text which is reserved for future use. return those two keys always exactly as they are given to you.
 
 2. File value schema (applies to every file key)
    Each file key's value MUST be an object with exactly these four keys (no extra keys):
@@ -32,6 +32,8 @@ def _analyze_structure(model, interface_data):
    - `"index"`: unique integer identifier. Indices MUST start at `1` and increase by `1` for each file. Assign indices deterministically by sorting all file paths in lexicographic (UTF-8) order and numbering in that order.
    - `"dependents"`: an array of integers referencing **index** values of other files in this same JSON that likely depend on or import/use this file. Use indices only, not file names. If none are expected, use an empty array `[]`.
    - `"request"`: must be either the empty object `{}` OR the exact string `"provide"`. Use `"provide"` **only** if you cannot infer the file's purpose or dependencies and therefore need the file contents.
+   - when you read a file and provide a summery you are not suppose to read the text inside it and return its summery rather you are suppose to see the program inside it understand what it does and return a summery based on that understanding 
+     and if you are not able to understand it or if you think its not a real program return what you exactly think about the summery.
 
    Additional rules for file entries:
    - Do NOT invent dependencies. If uncertain, leave `"dependents": []` and set `"request": "provide"`.
@@ -88,7 +90,8 @@ def _analyze_structure(model, interface_data):
 
 
 def _get_files_needing_content(summaries):
-    files = [path for path, data in summaries.items() if data.get("request") == "provide"]
+    files = [path for path, data in summaries.items() 
+             if isinstance(data, dict) and data.get("request") == "provide"]
     console.print(f"[cyan]Found {len(files)} files needing content review[/cyan]")
     return files
 
