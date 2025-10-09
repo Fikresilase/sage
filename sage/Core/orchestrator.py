@@ -58,6 +58,15 @@ class Orchestrator:
                         else:
                             program_results.append(f"❌ Failed to delete {file_path}")
                         actions_taken = True
+                    
+                    elif "rename" in request:
+                        # Rename file
+                        result = self._rename_file(file_path, request["rename"])
+                        if result:
+                            program_results.append(f"✅ {file_path} renamed to {request['rename']} successfully")
+                        else:
+                            program_results.append(f"❌ Failed to rename {file_path} to {request['rename']}")
+                        actions_taken = True
             
             # Handle command execution
             if "command" in ai_response:
@@ -155,6 +164,37 @@ class Orchestrator:
             return False
         except Exception as e:
             console.print(f"[red]Error deleting file: {e}[/red]")
+            return False
+    
+    def _rename_file(self, old_path: str, new_name: str) -> bool:
+        """Rename/move file to new location."""
+        try:
+            old_path_obj = Path(old_path)
+            
+            if not old_path_obj.exists():
+                console.print(f"[red]Error: File to rename not found: {old_path}[/red]")
+                return False
+            
+            # Handle different new_name formats:
+            # - "userform" -> rename in same directory with same extension
+            # - "src/components/ui/userform.tsx" -> full path move
+            new_path_obj = Path(new_name)
+            
+            # If new_name is just a filename without path, use same directory
+            if new_path_obj.parent == Path('.'):
+                new_path_obj = old_path_obj.parent / new_name
+            
+            # Ensure the target directory exists
+            new_path_obj.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Perform the rename/move
+            old_path_obj.rename(new_path_obj)
+            
+            console.print(f"[green]✅ Renamed {old_path} to {new_path_obj}[/green]")
+            return True
+            
+        except Exception as e:
+            console.print(f"[red]Error renaming file {old_path} to {new_name}: {e}[/red]")
             return False
     
     def _execute_command(self, command: str) -> str:
