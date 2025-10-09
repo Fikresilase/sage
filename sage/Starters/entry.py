@@ -6,60 +6,39 @@ import platform
 import os
 import subprocess
 from rich.console import Console
+from rich.prompt import Prompt
+import inquirer
 
 console = Console()
 
-def detect_terminal():
-    """Detect the shell/terminal being used, ignoring IDEs"""
-    # Get the shell from environment variables
-    shell = os.environ.get('SHELL', '')
+def get_terminal_choice():
+    """Let user choose their terminal from an interactive list with arrow keys"""
+    terminals = [
+        "powershell",
+        "cmd.exe", 
+        "bash",
+        "zsh",
+        "fish",
+        "sh",
+        "dash",
+        "ksh",
+        "tcsh",
+        "csh"
+    ]
     
-    if shell:
-        # Extract shell name from path
-        shell_name = os.path.basename(shell).lower()
-        if shell_name in ['bash', 'zsh', 'fish', 'sh', 'dash', 'ksh', 'tcsh', 'csh']:
-            return shell_name
+    questions = [
+        inquirer.List(
+            'terminal',
+            message="Select your terminal/shell",
+            choices=terminals,
+            carousel=True
+        )
+    ]
     
-    # Check COMSPEC on Windows for cmd.exe
-    if platform.system() == 'Windows':
-        comspec = os.environ.get('COMSPEC', '').lower()
-        if 'cmd.exe' in comspec:
-            return 'cmd.exe'
-        
-        # Check for PowerShell
-        if 'powershell' in comspec or 'pwsh' in comspec:
-            return 'powershell'
-        
-        # Check common PowerShell environment variables
-        if 'PSModulePath' in os.environ:
-            return 'powershell'
-        
-        # Try to detect PowerShell by checking parent process (simplified)
-        try:
-            result = subprocess.run(
-                ['cmd', '/c', 'echo %COMSPEC%'],
-                capture_output=True, text=True, timeout=2
-            )
-            if 'powershell' in result.stdout.lower() or 'pwsh' in result.stdout.lower():
-                return 'powershell'
-            elif 'cmd.exe' in result.stdout.lower():
-                return 'cmd.exe'
-        except (subprocess.TimeoutExpired, subprocess.SubprocessError):
-            pass
-    
-    # Fallback: check common shell environment variables
-    if 'BASH_VERSION' in os.environ:
-        return 'bash'
-    elif 'ZSH_VERSION' in os.environ:
-        return 'zsh'
-    elif 'FISH_VERSION' in os.environ:
-        return 'fish'
-    
-    # Final fallback based on platform
-    if platform.system() == 'Windows':
-        return 'cmd.exe'  # Default Windows fallback
-    else:
-        return 'bash'  # Default Unix fallback
+    answers = inquirer.prompt(questions)
+    selected_terminal = answers['terminal']
+    console.print(f"[green]Selected: {selected_terminal}[/green]")
+    return selected_terminal
 
 def detect_platform():
     """Detect the operating system platform"""
@@ -258,19 +237,18 @@ def setup_sage(root_path: Path = Path(".")):
     # Scan the parent directory (root_path) and get flattened structure
     flattened_files = get_flattened_structure(root_path)
 
-    # Detect platform and terminal
+    # Detect platform and let user select terminal
     detected_platform = detect_platform()
-    detected_terminal = detect_terminal()
+    selected_terminal = get_terminal_choice()
     
     console.print(f"[cyan]Detected platform: {detected_platform}[/cyan]")
-    console.print(f"[cyan]Detected terminal/shell: {detected_terminal}[/cyan]")
 
     # Create the complete interface structure with flattened file paths
     complete_interface = {
         **flattened_files,  # This unpacks all the flattened file paths
         "command": {
             "summary": "",
-            "terminal": detected_terminal,
+            "terminal": selected_terminal,
             "platform": detected_platform,
             "commands": []
         },
