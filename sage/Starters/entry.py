@@ -223,48 +223,40 @@ def setup_sage(root_path: Path = Path(".")):
                     ignore_patterns.append(line)
         console.print(f"[cyan]Loaded {len(ignore_patterns)} ignore patterns[/cyan]")
 
-    # Collect folder structure of the PARENT directory with ignore support
-    def should_ignore(item_name: str, item_path: Path) -> bool:
+    # Collect flattened file structure with relative paths
+    def should_ignore(item_path: Path) -> bool:
         # Check if item matches any ignore pattern
+        relative_path = item_path.relative_to(root_path)
         for pattern in ignore_patterns:
-            if pattern.endswith('/'):
-                # Directory pattern
-                if item_path.is_dir() and item_name == pattern.rstrip('/'):
-                    return True
-            else:
-                # File pattern or exact match
-                if item_name == pattern or item_name.endswith(pattern.lstrip('*')):
-                    return True
+            pattern = pattern.rstrip('/')
+            # Simple pattern matching - you might want to make this more robust
+            if str(relative_path).startswith(pattern) or pattern in str(relative_path):
+                return True
         return False
 
-    def get_structure(path: Path):
-        structure = {}
-        items = []
+    def get_flattened_structure(path: Path, base_path: Path = None):
+        if base_path is None:
+            base_path = path
         
-        # Collect all items first
+        flattened = {}
+        
         for item in path.iterdir():
-            items.append(item)
-        
-        # Sort items alphabetically by name
-        items.sort(key=lambda x: x.name.lower())
-        
-        for item in items:
-            item_name = item.name
-            
             # Skip if item matches ignore patterns
-            if should_ignore(item_name, item):
+            if should_ignore(item):
                 continue
                 
             if item.is_dir():
-                # Recursively get structure for directories
-                structure[item_name] = get_structure(item)
+                # Recursively get files from directories
+                flattened.update(get_flattened_structure(item, base_path))
             else:
-                structure[item_name] = "file"
+                # Get relative path from base directory
+                relative_path = item.relative_to(base_path)
+                flattened[str(relative_path).replace('\\', '/')] = "file"
         
-        return structure
+        return flattened
 
-    # Scan the parent directory (root_path) instead of sage_dir
-    folder_structure = get_structure(root_path)
+    # Scan the parent directory (root_path) and get flattened structure
+    flattened_files = get_flattened_structure(root_path)
 
     # Detect platform and terminal
     detected_platform = detect_platform()
@@ -273,24 +265,24 @@ def setup_sage(root_path: Path = Path(".")):
     console.print(f"[cyan]Detected platform: {detected_platform}[/cyan]")
     console.print(f"[cyan]Detected terminal/shell: {detected_terminal}[/cyan]")
 
-    # Create the complete interface structure with the two new root keys
+    # Create the complete interface structure with flattened file paths
     complete_interface = {
+        **flattened_files,  # This unpacks all the flattened file paths
         "command": {
             "summary": "",
             "terminal": detected_terminal,
             "platform": detected_platform,
             "commands": []
         },
-        "text": "this is a place holder for your response.",
-        **folder_structure  # This unpacks the folder structure into the root level
+        "text": "place holder for your responce"
     }
 
     # Create/update interface.json inside Sage folder
     with interface_file.open("w", encoding="utf-8") as f:
         json.dump(complete_interface, f, indent=4, sort_keys=True)
 
-    console.print(f"[green]{'Updated' if is_sage_installed else 'Created'}[/green] {interface_file} with alphabetically sorted folder structure")
-    console.print(f"[green]Recorded {len(folder_structure)} items from parent directory[/green]")
+    console.print(f"[green]{'Updated' if is_sage_installed else 'Created'}[/green] {interface_file} with flattened file structure")
+    console.print(f"[green]Recorded {len(flattened_files)} files[/green]")
     
     if is_sage_installed:
         console.print("[bold green]Sage interface updated successfully![/bold green]")

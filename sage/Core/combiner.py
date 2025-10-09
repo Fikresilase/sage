@@ -8,7 +8,6 @@ from .prompts import SYSTEM_PROMPT
 
 console = Console()
 
-
 # SYSTEM_PROMPT = """ my system prompt for the AI"""
 
 class Combiner:
