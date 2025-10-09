@@ -14,7 +14,7 @@ def send_to_gemini(api_key: str, system_prompt: str, user_prompt: str) -> str:
         genai.configure(api_key=api_key)
         
         generation_config = {
-            "temperature": 0.1,
+            "temperature": 1,
             "top_p": 0.8,
             "top_k": 40,
             "max_output_tokens": 10000,
@@ -24,7 +24,7 @@ def send_to_gemini(api_key: str, system_prompt: str, user_prompt: str) -> str:
         
         console.print("[bold cyan]🔹 Initializing Gemini model...[/bold cyan]")
         model = genai.GenerativeModel(
-            'gemini-2.0-flash-exp',
+            'gemini-2.5-pro',
             generation_config=generation_config,
             system_instruction=system_prompt
         )
