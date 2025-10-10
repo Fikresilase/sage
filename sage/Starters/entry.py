@@ -41,8 +41,12 @@ def get_terminal_choice():
     ]
     
     answers = inquirer.prompt(questions)
+    os.system('cls' if os.name == 'nt' else 'clear')
     selected_terminal = answers['terminal']
-    console.print(f"[{MAIN_COLOR}]Selected: {selected_terminal}[/]")
+    
+    # Clear the inquirer output and show only the selection
+    console.print(f"\r[{MAIN_COLOR}]Sage Cli[/]")
+    console.print(f"\r[{MAIN_COLOR}]Selected Terminal: {selected_terminal}[/]")
     return selected_terminal
 
 def detect_platform():
