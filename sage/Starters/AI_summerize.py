@@ -53,7 +53,7 @@ def _analyze_structure(client, model_name, interface_data):
 def _get_files_needing_content(summaries):
     files = [path for path, data in summaries.items() 
              if isinstance(data, dict) and data.get("request") == "provide"]
-    console.print(f"[{MAIN_COLOR}]Found {len(files)} files needing content review[/]")
+    console.print(f"[white]Found {len(files)} files needing content review[/]")
     return files
 
 def _provide_content_and_reanalyze(client, model_name, summaries, files_needing_content):

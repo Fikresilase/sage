@@ -62,8 +62,8 @@ def summarize_files(interface_file: Path = Path("Sage/interface.json")):
     with interface_file.open("w", encoding="utf-8") as f:
         json.dump(interface_data, f, indent=4)
     
-    console.print(f"[{MAIN_COLOR}]File summarization complete![/]")
-    console.print(f"[{MAIN_COLOR}]Updated interface.json with summaries[/]")
+    console.print(f"[white]File summarization complete![/]")
+    console.print(f"[white]Updated interface.json with summaries[/]")
 
 if __name__ == "__main__":
     typer.run(summarize_files)

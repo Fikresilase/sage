@@ -47,7 +47,8 @@ def display_header():
     console.print("1. Ask questions, edit files, or run commands.")
     console.print("2. Be specific for the best results.")
     console.print("3. Create [magenta]SAGE.txt[/magenta] files to customize your interactions with Sage.")
-    console.print("4. [cyan]/model[/cyan] to select a model")
+    console.print("4. Type [cyan]model[/cyan] to select a model")
+    console.print("5. Type [cyan]voice[/cyan] to use the voice mode")
     console.print("\n")
 
 
