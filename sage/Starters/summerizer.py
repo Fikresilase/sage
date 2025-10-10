@@ -1,9 +1,9 @@
 from pathlib import Path
 import json
-import google.generativeai as genai
 import typer
 from rich.console import Console
-from sage.Starters.env_utils import get_api_key
+from openai import OpenAI
+from sage.Starters.env_utils import get_api_key, get_model
 from sage.Starters.file_utils import mark_files_unsummarized, update_interface_with_summaries
 from sage.Starters.AI_summerize import analyze_and_summarize
 
@@ -12,6 +12,12 @@ console = Console()
 def summarize_files(interface_file: Path = Path("Sage/interface.json")):
     api_key = get_api_key()
     if not api_key:
+        return
+    
+    # Get model from environment
+    model_name = get_model()
+    if not model_name:
+        console.print("[red]Error: MODEL not found in .env file[/red]")
         return
     
     if not interface_file.exists():
@@ -29,20 +35,23 @@ def summarize_files(interface_file: Path = Path("Sage/interface.json")):
         console.print("[green]Marked all files as 'unsummarized'[/green]")
         return
     
-    console.print("[cyan]Starting file summarization with Gemini AI...[/cyan]")
+    console.print(f"[cyan]Starting file summarization with OpenRouter ({model_name})...[/cyan]")
     
     try:
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.5-flash')
-        console.print("[green]Using model: gemini-2.5-flash[/green]")
+        # Initialize OpenAI client with OpenRouter
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key,
+        )
+        console.print(f"[green]Using model: {model_name}[/green]")
     except Exception as e:
-        console.print(f"[red]Error configuring Gemini: {e}[/red]")
+        console.print(f"[red]Error configuring OpenRouter client: {e}[/red]")
         return
     
     with interface_file.open("r", encoding="utf-8") as f:
         interface_data = json.load(f)
     
-    final_summaries = analyze_and_summarize(model, interface_data)
+    final_summaries = analyze_and_summarize(client, model_name, interface_data)
     update_interface_with_summaries(interface_data, final_summaries)
     
     with interface_file.open("w", encoding="utf-8") as f:
