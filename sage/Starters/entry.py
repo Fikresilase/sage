@@ -46,7 +46,7 @@ def get_terminal_choice():
     
     # Clear the inquirer output and show only the selection
     console.print(f"\r[{MAIN_COLOR}]Sage Cli[/]")
-    console.print(f"\r[{MAIN_COLOR}]Selected Terminal: {selected_terminal}[/]")
+    console.print(f"\r[{MAIN_COLOR}]Selected Terminal:[/] [#00c8e2] {selected_terminal}[/]")
     return selected_terminal
 
 def detect_platform():
