@@ -56,26 +56,38 @@ Please provide a helpful response based on the project structure and the user's 
             # Parse AI response
             ai_response = self._parse_ai_response(ai_response_text)
             
-            # Process through orchestrator - this returns either:
-            # - Action results (if actions were taken)
-            # - AI's text response (if no actions)
+            # Process through orchestrator - this returns action results
             orchestrator_response = self.orchestrator.process_ai_response(ai_response)
             
             # Check if actions were taken (orchestrator returns action results)
             if self._contains_action_results(orchestrator_response):
-                # Store the action results and mark as pending
+                # Store the initial AI response and orchestrator results
                 self.conversation_history.append({
                     "user": user_prompt,
                     "ai": ai_response,
                     "action_results": orchestrator_response,
                     "pending": True
                 })
-                self.pending_actions = True
                 
-                # Return AI's original text if it exists, otherwise return action results
-                return ai_response.get("text", orchestrator_response)
+                # ⚠️ IMMEDIATELY send orchestrator results back to AI
+                follow_up_response = self._get_ai_followup(orchestrator_response, interface_data)
+                
+                # Update interface with follow-up AI response if needed
+                if "text" in follow_up_response:
+                    self.orchestrator.update_interface_json(follow_up_response)
+                
+                # Store the follow-up response
+                self.conversation_history.append({
+                    "user": "[System: Orchestrator Results]",
+                    "ai": follow_up_response,
+                    "pending": False
+                })
+                
+                # Return only the follow-up AI's text to user (never raw orchestrator messages)
+                return follow_up_response.get("text", "").strip()
+                
             else:
-                # No actions taken, just return the response
+                # No actions taken, normal flow
                 if "text" in ai_response:
                     # Update interface with AI's full JSON (cleaned)
                     self.orchestrator.update_interface_json(ai_response)
@@ -88,16 +100,51 @@ Please provide a helpful response based on the project structure and the user's 
                 })
                 self.pending_actions = False
                 
-                return ai_response.get("text", orchestrator_response)
+                # Return only AI's text (never raw orchestrator messages)
+                return ai_response.get("text", "").strip()
             
         except Exception as e:
             console.print(f"[red]❌ Error in combiner: {e}[/red]")
             return f"Error: {str(e)}"
     
+    def _get_ai_followup(self, orchestrator_results: str, interface_data: dict) -> dict:
+        """Immediately send orchestrator results back to AI for processing"""
+        
+        followup_prompt = f"""
+Project Interface JSON:
+{json.dumps(interface_data, indent=2)}
+
+🚨 **ORCHESTRATOR EXECUTION RESULTS:**
+{orchestrator_results}
+
+Please process these orchestrator results and provide a user-friendly response. 
+You should:
+1. Summarize what was accomplished (or what failed) in a natural way
+2. Update the interface.json if the project structure changed
+3. Suggest next steps if appropriate
+
+Respond in the standard JSON format with a "text" field for the user message.
+Any additional file operations or interface updates should be included in the response.
+"""
+        
+        # Send to Gemini with the same system prompt
+        ai_response_text = send_to_gemini(
+            api_key=self.api_key,
+            system_prompt=SYSTEM_PROMPT,
+            user_prompt=followup_prompt
+        )
+        
+        # Parse and return the AI's follow-up response
+        return self._parse_ai_response(ai_response_text)
+    
     def _contains_action_results(self, response: str) -> bool:
         """Check if response contains action results (success/error messages)"""
+        if not isinstance(response, str):
+            return False
+            
         action_indicators = ["✅", "❌", "edited successfully", "created successfully", 
-                           "deleted successfully", "Command:", "File content for"]
+                           "deleted successfully", "Command:", "File content for",
+                           "renamed successfully", "Error:", "Failed to"]
         return any(indicator in response for indicator in action_indicators)
     
     def _parse_ai_response(self, response_text: str) -> dict[str, any]:
