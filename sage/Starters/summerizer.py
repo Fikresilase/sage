@@ -9,6 +9,11 @@ from sage.Starters.AI_summerize import analyze_and_summarize
 
 console = Console()
 
+# Define your main color and related colors
+MAIN_COLOR = "#8B5CF6" 
+ACCENT_COLOR = "#ffffff"        
+USER_COLOR = "#1D5ACA"   
+
 def summarize_files(interface_file: Path = Path("Sage/interface.json")):
     api_key = get_api_key()
     if not api_key:
@@ -26,16 +31,16 @@ def summarize_files(interface_file: Path = Path("Sage/interface.json")):
     
     choice = typer.prompt("Do you want to summarize your files? (y/n)", default="n")
     if choice.strip().lower() not in ["y", "yes"]:
-        console.print("[yellow]Skipping file summarization...[/yellow]")
+        console.print(f"[{ACCENT_COLOR}]Skipping file summarization...[/]")
         with interface_file.open("r", encoding="utf-8") as f:
             interface_data = json.load(f)
         mark_files_unsummarized(interface_data)
         with interface_file.open("w", encoding="utf-8") as f:
             json.dump(interface_data, f, indent=4)
-        console.print("[green]Marked all files as 'unsummarized'[/green]")
+        console.print(f"[{MAIN_COLOR}]Marked all files as 'unsummarized'[/]")
         return
     
-    console.print(f"[cyan]Starting file summarization with OpenRouter ({model_name})...[/cyan]")
+    console.print(f"[{MAIN_COLOR}]Starting file summarization with OpenRouter ({model_name})...[/]")
     
     try:
         # Initialize OpenAI client with OpenRouter
@@ -43,7 +48,7 @@ def summarize_files(interface_file: Path = Path("Sage/interface.json")):
             base_url="https://openrouter.ai/api/v1",
             api_key=api_key,
         )
-        console.print(f"[green]Using model: {model_name}[/green]")
+        console.print(f"[{MAIN_COLOR}]Using model: {model_name}[/]")
     except Exception as e:
         console.print(f"[red]Error configuring OpenRouter client: {e}[/red]")
         return
@@ -57,8 +62,8 @@ def summarize_files(interface_file: Path = Path("Sage/interface.json")):
     with interface_file.open("w", encoding="utf-8") as f:
         json.dump(interface_data, f, indent=4)
     
-    console.print("[bold green]File summarization complete![/bold green]")
-    console.print("[green]Updated interface.json with summaries[/green]")
+    console.print(f"[{MAIN_COLOR}]File summarization complete![/]")
+    console.print(f"[{MAIN_COLOR}]Updated interface.json with summaries[/]")
 
 if __name__ == "__main__":
     typer.run(summarize_files)

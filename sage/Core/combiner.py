@@ -22,8 +22,8 @@ class Combiner:
             # Load interface data (flat structure)
             interface_data = self._load_interface_data()
             if not interface_data:
-                console.print("[red]❌ Error: Could not load project interface data. Please run setup first.[/red]")
-                return "❌ Error: Could not load project interface data. Please run setup first."
+                console.print("[red]x Error: Could not load project interface data. Please run setup first.[/red]")
+                return "x Error: Could not load project interface data. Please run setup first."
 
             # Add conversation history to context
             history_context = self._format_conversation_history()
@@ -106,7 +106,7 @@ Please provide a helpful response based on the project structure and the user's 
                 return ai_response.get("text", "").strip()
 
         except Exception as e:
-            console.print(f"[red]❌ Error in combiner: {e}[/red]")
+            console.print(f"[red]x Error in combiner: {e}[/red]")
             return f"Error: {str(e)}"
 
     def _get_ai_followup(self, orchestrator_results: str, interface_data: dict) -> dict:
@@ -143,7 +143,7 @@ Any additional file operations or interface updates should be included in the re
         if not isinstance(response, str):
             return False
 
-        action_indicators = ["✅", "❌", "edited successfully", "created successfully",
+        action_indicators = ["✅", "x", "edited successfully", "created successfully",
                            "deleted successfully", "Command:", "File content for",
                            "renamed successfully", "Error:", "Failed to"]
         return any(indicator in response for indicator in action_indicators)
@@ -165,13 +165,13 @@ Any additional file operations or interface updates should be included in the re
         # Assuming "Sage" is a directory in the project root
         interface_file = Path("Sage/interface.json")
         if not interface_file.exists():
-            console.print("[red]❌ interface.json not found. Please run setup first.[/red]")
+            console.print("[red]x interface.json not found. Please run setup first.[/red]")
             return None
         try:
             with open(interface_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except Exception as e:
-            console.print(f"[red]❌ Error loading interface.json: {e}[/red]")
+            console.print(f"[red]x Error loading interface.json: {e}[/red]")
             return None
 
     def _format_conversation_history(self) -> str:

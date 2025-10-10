@@ -9,7 +9,7 @@ def get_api_key():
     # Check if .env exists and get API key
     env_file = Path(".env")
     if not env_file.exists():
-        console.print("[red]❌ Error: .env file not found[/red]")
+        console.print("[red]x Error: .env file not found[/red]")
         return None
     
     # Load SAGE_API_KEY from .env
@@ -21,7 +21,7 @@ def get_api_key():
             break
     
     if not api_key:
-        console.print("[red]❌ Error: SAGE_API_KEY not found in .env file[/red]")
+        console.print("[red]x Error: SAGE_API_KEY not found in .env file[/red]")
         return None
 
     return api_key
@@ -31,7 +31,7 @@ def get_model():
     # Check if .env exists
     env_file = Path(".env")
     if not env_file.exists():
-        console.print("[red]❌ Error: .env file not found[/red]")
+        console.print("[red]x Error: .env file not found[/red]")
         return None
     
     # Load MODEL from .env
@@ -43,7 +43,7 @@ def get_model():
             break
     
     if not model:
-        console.print("[red]❌ Error: MODEL not found in .env file[/red]")
+        console.print("[red]x Error: MODEL not found in .env file[/red]")
         return None
 
     return model

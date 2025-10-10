@@ -38,7 +38,7 @@ class Orchestrator:
                         if result:
                             program_results.append(f"✅ {file_path} edited successfully")
                         else:
-                            program_results.append(f"❌ Failed to edit {file_path}")
+                            program_results.append(f"x Failed to edit {file_path}")
                         actions_taken = True
                     
                     elif "write" in request:
@@ -47,7 +47,7 @@ class Orchestrator:
                         if result:
                             program_results.append(f"✅ {file_path} created successfully")
                         else:
-                            program_results.append(f"❌ Failed to create {file_path}")
+                            program_results.append(f"x Failed to create {file_path}")
                         actions_taken = True
                     
                     elif "delete" in request:
@@ -56,7 +56,7 @@ class Orchestrator:
                         if result:
                             program_results.append(f"✅ {file_path} deleted successfully")
                         else:
-                            program_results.append(f"❌ Failed to delete {file_path}")
+                            program_results.append(f"x Failed to delete {file_path}")
                         actions_taken = True
                     
                     elif "rename" in request:
@@ -65,7 +65,7 @@ class Orchestrator:
                         if result:
                             program_results.append(f"✅ {file_path} renamed to {request['rename']} successfully")
                         else:
-                            program_results.append(f"❌ Failed to rename {file_path} to {request['rename']}")
+                            program_results.append(f"x Failed to rename {file_path} to {request['rename']}")
                         actions_taken = True
             
             # Handle command execution
@@ -86,7 +86,7 @@ class Orchestrator:
             return "\n".join(program_results)
             
         except Exception as e:
-            return f"❌ Error in orchestrator: {str(e)}"
+            return f"x Error in orchestrator: {str(e)}"
     
     def update_interface_json(self, new_interface_data: Dict[str, Any]):
         """Update the entire interface.json with new data from AI"""
@@ -108,7 +108,7 @@ class Orchestrator:
             console.print("[green]✅ Interface JSON updated successfully[/green]")
             return True
         except Exception as e:
-            console.print(f"[red]❌ Error updating interface JSON: {e}[/red]")
+            console.print(f"[red]x Error updating interface JSON: {e}[/red]")
             return False
     
     def _read_file(self, file_path: str) -> str:

@@ -5,6 +5,11 @@ from .prompts import system_prompt
 
 console = Console()
 
+# Define your main color and related colors
+MAIN_COLOR = "#8B5CF6" 
+ACCENT_COLOR = "#ffffff"        
+USER_COLOR = "#1D5ACA"   
+
 def analyze_and_summarize(client, model_name, interface_data):
     # Step 1: initial analysis
     summaries = _analyze_structure(client, model_name, interface_data)
@@ -13,7 +18,7 @@ def analyze_and_summarize(client, model_name, interface_data):
     files_needing_content = _get_files_needing_content(summaries)
     
     if files_needing_content:
-        console.print(f"[cyan]Providing content for {len(files_needing_content)} files...[/cyan]")
+        console.print(f"[{MAIN_COLOR}]Providing content for {len(files_needing_content)} files...[/]")
         summaries = _provide_content_and_reanalyze(client, model_name, summaries, files_needing_content)
     
     return summaries
@@ -48,7 +53,7 @@ def _analyze_structure(client, model_name, interface_data):
 def _get_files_needing_content(summaries):
     files = [path for path, data in summaries.items() 
              if isinstance(data, dict) and data.get("request") == "provide"]
-    console.print(f"[cyan]Found {len(files)} files needing content review[/cyan]")
+    console.print(f"[{MAIN_COLOR}]Found {len(files)} files needing content review[/]")
     return files
 
 def _provide_content_and_reanalyze(client, model_name, summaries, files_needing_content):
@@ -59,12 +64,12 @@ def _provide_content_and_reanalyze(client, model_name, summaries, files_needing_
             try:
                 content = path_obj.read_text(encoding="utf-8", errors="ignore")
                 file_contents[file_path] = content
-                console.print(f"[green]✓ Read content for {file_path}[/green]")
+                console.print(f"[{MAIN_COLOR}]✓ Read content for {file_path}[/]")
             except Exception as e:
-                console.print(f"[yellow]⚠ Could not read {file_path}: {e}[/yellow]")
+                console.print(f"[{ACCENT_COLOR}]⚠ Could not read {file_path}: {e}[/]")
                 file_contents[file_path] = ""
         else:
-            console.print(f"[yellow]⚠ File not found: {file_path}[/yellow]")
+            console.print(f"[{ACCENT_COLOR}]⚠ File not found: {file_path}[/]")
             file_contents[file_path] = ""
     
     content_review_prompt = """
@@ -96,7 +101,7 @@ def _provide_content_and_reanalyze(client, model_name, summaries, files_needing_
         
         response_text = completion.choices[0].message.content.strip()
         updated_summaries = json.loads(_extract_json(response_text))
-        console.print("[green]✓ Content review complete[/green]")
+        console.print(f"[{MAIN_COLOR}]✓ Content review complete[/]")
         return updated_summaries
     except Exception as e:
         console.print(f"[red]Error in content review: {e}[/red]")

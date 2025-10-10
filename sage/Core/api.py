@@ -16,7 +16,7 @@ def send_to_openrouter(system_prompt: str, user_prompt: str) -> str:
 
         model = get_model()
         if not model:
-            console.print("[red]❌ Error: MODEL not found in .env file[/red]")
+            console.print("[red]x Error: MODEL not found in .env file[/red]")
             return "{}"
 
         console.print(f"[bold cyan]🔹 Using model: {model}[/bold cyan]")
@@ -59,5 +59,5 @@ def send_to_openrouter(system_prompt: str, user_prompt: str) -> str:
         return ai_response.strip()
 
     except Exception as e:
-        console.print(f"[red]❌ Error: {e}[/red]")
+        console.print(f"[red]x Error: {e}[/red]")
         return "{}"

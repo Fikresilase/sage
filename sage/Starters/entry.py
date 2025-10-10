@@ -11,6 +11,11 @@ import inquirer
 
 console = Console()
 
+# Define your main color and related colors
+MAIN_COLOR = "#8B5CF6" 
+ACCENT_COLOR = "#ffffff"        
+USER_COLOR = "#1D5ACA"   
+
 def get_terminal_choice():
     """Let user choose their terminal from an interactive list with arrow keys"""
     terminals = [
@@ -37,7 +42,7 @@ def get_terminal_choice():
     
     answers = inquirer.prompt(questions)
     selected_terminal = answers['terminal']
-    console.print(f"[green]Selected: {selected_terminal}[/green]")
+    console.print(f"[{MAIN_COLOR}]Selected: {selected_terminal}[/]")
     return selected_terminal
 
 def detect_platform():
@@ -83,18 +88,18 @@ def setup_sage(root_path: Path = Path(".")):
         )
         
         if choice.strip().lower() not in ["y", "yes"]:
-            console.print("[cyan]Skipping interface update. Continuing to app...[/cyan]")
+            console.print(f"[{MAIN_COLOR}]Skipping interface update. Continuing to app...[/]")
             return  # Continue to app instead of exiting
         else:
-            console.print("[cyan]Updating Sage interface...[/cyan]")
+            console.print(f"[{MAIN_COLOR}]Updating Sage interface...[/]")
     else:
         choice = typer.prompt("Do you want to install Sage? (yes/no)", default="no")
 
         if choice.strip().lower() not in ["y", "yes"]:
-            console.print("[yellow]Sage setup cancelled. Continuing to app...[/yellow]")
+            console.print(f"[{ACCENT_COLOR}]Sage setup cancelled. Continuing to app...[/]")
             return  # Continue to app instead of exiting
         else:
-            console.print("[cyan]Setting up Sage...[/cyan]")
+            console.print(f"[{MAIN_COLOR}]Setting up Sage...[/]")
 
     # Ensure .env file exists
     env_file = root_path / ".env"
@@ -102,17 +107,17 @@ def setup_sage(root_path: Path = Path(".")):
     
     if env_file.exists():
         env_content = env_file.read_text(encoding="utf-8")
-        console.print(f"[cyan]Found[/cyan] {env_file}")
+        console.print(f"[{MAIN_COLOR}]Found[/] {env_file}")
     else:
         env_file.touch()
-        console.print(f"[green]Created[/green] {env_file}")
+        console.print(f"[{MAIN_COLOR}]Created[/] {env_file}")
 
     # Check if SAGE_API_KEY exists in .env
     sage_api_key_pattern = r'^\s*SAGE_API_KEY\s*=\s*[^\s#]+'
     has_sage_api_key = re.search(sage_api_key_pattern, env_content, re.MULTILINE)
 
     if not has_sage_api_key:
-        console.print("[yellow]SAGE_API_KEY not found in .env file[/yellow]")
+        console.print(f"[{ACCENT_COLOR}]SAGE_API_KEY not found in .env file[/]")
         sage_api_key = typer.prompt("Please enter your SAGE_API_KEY (input will be visible)")
         
         if sage_api_key.strip():
@@ -125,18 +130,18 @@ def setup_sage(root_path: Path = Path(".")):
             with env_file.open("w", encoding="utf-8") as f:
                 f.write(env_content)
             
-            console.print("[green]SAGE_API_KEY added to .env file[/green]")
+            console.print(f"[{MAIN_COLOR}]SAGE_API_KEY added to .env file[/]")
         else:
-            console.print("[yellow]No SAGE_API_KEY provided. You'll need to add it manually to .env[/yellow]")
+            console.print(f"[{ACCENT_COLOR}]No SAGE_API_KEY provided. You'll need to add it manually to .env[/]")
     else:
-        console.print("[green]SAGE_API_KEY found in .env file[/green]")
+        console.print(f"[{MAIN_COLOR}]SAGE_API_KEY found in .env file[/]")
 
     # Ensure Sage folder exists
     if not sage_dir.exists():
         sage_dir.mkdir()
-        console.print(f"[green]Created[/green] {sage_dir}")
+        console.print(f"[{MAIN_COLOR}]Created[/] {sage_dir}")
     else:
-        console.print(f"[cyan]Found[/cyan] {sage_dir}")
+        console.print(f"[{MAIN_COLOR}]Found[/] {sage_dir}")
 
     # Create/update .sageignore file in Sage folder with common ignore patterns
     common_ignores = [
@@ -188,9 +193,9 @@ def setup_sage(root_path: Path = Path(".")):
     if not sageignore_file.exists():
         with sageignore_file.open("w", encoding="utf-8") as f:
             f.write("\n".join(common_ignores))
-        console.print(f"[green]Created[/green] {sageignore_file}")
+        console.print(f"[{MAIN_COLOR}]Created[/] {sageignore_file}")
     else:
-        console.print(f"[cyan]Found[/cyan] {sageignore_file}")
+        console.print(f"[{MAIN_COLOR}]Found[/] {sageignore_file}")
 
     # Load ignore patterns
     ignore_patterns = []
@@ -200,7 +205,7 @@ def setup_sage(root_path: Path = Path(".")):
                 line = line.strip()
                 if line and not line.startswith("#"):
                     ignore_patterns.append(line)
-        console.print(f"[cyan]Loaded {len(ignore_patterns)} ignore patterns[/cyan]")
+        console.print(f"[{MAIN_COLOR}]Loaded {len(ignore_patterns)} ignore patterns[/]")
 
     # Collect flattened file structure with relative paths
     def should_ignore(item_path: Path) -> bool:
@@ -241,7 +246,7 @@ def setup_sage(root_path: Path = Path(".")):
     detected_platform = detect_platform()
     selected_terminal = get_terminal_choice()
     
-    console.print(f"[cyan]Detected platform: {detected_platform}[/cyan]")
+    console.print(f"[{MAIN_COLOR}]Detected platform: {detected_platform}[/]")
 
     # Create the complete interface structure with flattened file paths
     complete_interface = {
@@ -259,10 +264,10 @@ def setup_sage(root_path: Path = Path(".")):
     with interface_file.open("w", encoding="utf-8") as f:
         json.dump(complete_interface, f, indent=4, sort_keys=True)
 
-    console.print(f"[green]{'Updated' if is_sage_installed else 'Created'}[/green] {interface_file} with flattened file structure")
-    console.print(f"[green]Recorded {len(flattened_files)} files[/green]")
+    console.print(f"[{MAIN_COLOR}]{'Updated' if is_sage_installed else 'Created'}[/] {interface_file} with flattened file structure")
+    console.print(f"[{MAIN_COLOR}]Recorded {len(flattened_files)} files[/]")
     
     if is_sage_installed:
-        console.print("[bold green]Sage interface updated successfully![/bold green]")
+        console.print(f"[{MAIN_COLOR}]Sage interface updated successfully![/]")
     else:
-        console.print("[bold green]Sage setup complete![/bold green]")
+        console.print(f"[{MAIN_COLOR}]Sage setup complete![/]")
