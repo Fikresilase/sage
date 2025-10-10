@@ -81,24 +81,14 @@ def display_header():
     console.print("4. [cyan]/help[/cyan] for more information.")
     console.print("\n")
 
-def display_footer():
-    """
-    Displays the static prompt box and the status bar from the image.
-    This function helps in recreating the initial screenshot.
-    """
-    # --- Status Bar ---
-    path = Text("...~\\Desktop\\mine\\The Dream\\test", style="white")
-    sandbox = Text("no sandbox (see /docs)", style="red")
-    model = Text("sage-2.5-pro (100% context left)", style="bright_black")
 
-    # Use a Table with no lines to create clean columns for the status bar
-    grid = Table.grid(expand=True)
-    grid.add_column(justify="left")
-    grid.add_column(justify="center")
-    grid.add_column(justify="right")
-    grid.add_row(path, sandbox, model)
-    console.print(grid)
-    console.print()
+def display_footer():
+    ownership = Text("made with ❤️ by Fikre   ", style="bright_black")  # gray text
+    width = console.width
+
+    # Pad with spaces on the left
+    ownership.pad_left(width - len(ownership.plain))
+    console.print(ownership)
 
 def chat():
     """
@@ -120,25 +110,9 @@ def chat():
     console.print("[bold green]Sage is ready. Type your message below.[/bold green]")
     
     while True:
-        try:
-            # Display prompt box with placeholder text
-            prompt_text = Text.from_markup("> [bright_black]Type your message or @path/to/file[/]")
-            console.print(
-                Panel(
-                    prompt_text,
-                    box=box.ROUNDED,
-                    border_style="white",
-                    padding=(0, 1),
-                    height=3,
-                )
-            )
-            
+        try:       
             # Get user input using a clean, single-line prompt
             user_message = _get_user_input()
-            # --- Status Bar ---
-            path = Text("...~\\Desktop\\mine\\The Dream\\test", style="white")
-            sandbox = Text("no sandbox (see /docs)", style="red")
-            model = Text("sage-2.5-pro (100% context left)", style="bright_black")
             
             if not user_message:
                 console.print("[yellow]No message entered. Exiting chat...[/yellow]")
