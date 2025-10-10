@@ -25,3 +25,25 @@ def get_api_key():
         return None
 
     return api_key
+
+def get_model():
+    """Get MODEL from .env file."""
+    # Check if .env exists
+    env_file = Path(".env")
+    if not env_file.exists():
+        console.print("[red]❌ Error: .env file not found[/red]")
+        return None
+    
+    # Load MODEL from .env
+    env_content = env_file.read_text(encoding="utf-8")
+    model = None
+    for line in env_content.splitlines():
+        if line.startswith("MODEL="):
+            model = line.split("=", 1)[1].strip()
+            break
+    
+    if not model:
+        console.print("[red]❌ Error: MODEL not found in .env file[/red]")
+        return None
+
+    return model
