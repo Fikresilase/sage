@@ -14,15 +14,17 @@ from .env_util import get_api_key
 
 console = Console()
 
+# Define your main color and related colors
+MAIN_COLOR = "#8B5CF6" 
+ACCENT_COLOR = "#06D6A0"  
+USER_COLOR = "#F472B6"   
+
 def chat():
-    """
-    Chat interface that takes user input, shows processing animation,
-    gets AI response, and displays it in a loop.
-    """
+    
     # Get API key first
     api_key = get_api_key()
     if not api_key:
-        console.print("[bold red]❌ Cannot start chat without API key[/bold red]")
+        console.print(f"[bold red]❌ Cannot start chat without API key[/bold red]")
         return
     
     # Initialize combiner (which includes orchestrator)
@@ -30,8 +32,8 @@ def chat():
     
     console.print(
         Panel.fit(
-            "[bold green]💬 Sage Chat Interface[/bold green]\nType 'exit', 'quit', or press Ctrl+C to leave",
-            border_style="green",
+            f"[bold {MAIN_COLOR}]💬 Sage Chat Interface[/bold {MAIN_COLOR}]\nType 'exit', 'quit', or press Ctrl+C to leave",
+            border_style=MAIN_COLOR,
             padding=(1, 2)
         )
     )
@@ -47,7 +49,7 @@ def chat():
                 break
                 
             if user_message.lower() in ['exit', 'quit', 'bye']:
-                console.print("[green]👋 Goodbye![/green]")
+                console.print(f"[{MAIN_COLOR}]👋 Goodbye![/{MAIN_COLOR}]")
                 break
 
             # Immediately display the user's message in a final, clean box
@@ -64,7 +66,7 @@ def chat():
             console.print()
             
         except KeyboardInterrupt:
-            console.print("\n[green]👋 Chat session ended by user[/green]")
+            console.print(f"\n[{MAIN_COLOR}]👋 Chat session ended by user[/{MAIN_COLOR}]")
             break
         except Exception as e:
             console.print(f"[red]❌ Error in chat: {e}[/red]")
@@ -74,8 +76,8 @@ def _get_user_input() -> str:
     """Clean input prompt that visually matches the response boxes."""
     try:
         user_input = console.input(
-            Text("💬 ", style="bold green") + 
-            Text("You: ", style="bold cyan") + 
+            Text("💬 ", style=f"bold {MAIN_COLOR}") + 
+            Text("You: ", style=f"bold {ACCENT_COLOR}") + 
             Text("", style="bright_white")
         )
         return user_input.strip()
@@ -87,8 +89,8 @@ def _display_user_message_in_box(message: str):
     console.print(
         Panel(
             Text(message, style="white"),
-            title="[bold green]👤 You[/bold green]",
-            border_style="green",
+            title=f"[bold {MAIN_COLOR}]👤 You[/bold {MAIN_COLOR}]",
+            border_style=MAIN_COLOR,
             title_align="left",
             padding=(1, 2),
             box=box.ROUNDED
@@ -98,9 +100,9 @@ def _display_user_message_in_box(message: str):
 def _get_ai_response_with_spinner(user_message: str, combiner: Combiner) -> str:
     """Get AI response with a loading spinner."""
     with Status(
-        "[bold green]🤖 Sage is thinking...[/bold green]", 
+        f"[bold {MAIN_COLOR}]🤖 Sage is thinking...[/bold {MAIN_COLOR}]", 
         spinner="dots",
-        spinner_style="green"
+        spinner_style=MAIN_COLOR
     ) as status:
         response = combiner.get_ai_response(user_message)
     
@@ -111,8 +113,8 @@ def _display_ai_response(response: str):
     console.print(
         Panel(
             Text(response, style="white"),
-            title="[bold green]🧠 Sage[/bold green]",
-            border_style="green",
+            title=f"[bold {MAIN_COLOR}]🧠 Sage[/bold {MAIN_COLOR}]",
+            border_style=MAIN_COLOR,
             title_align="left",
             padding=(1, 2),
             box=box.ROUNDED
