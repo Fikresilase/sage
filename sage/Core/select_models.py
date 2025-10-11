@@ -44,7 +44,7 @@ def save_model_to_env(model_name):
     console.print(f"[green]✓ Updated .env file with MODEL={model_name}[/green]")
 
 def display_model_page(page, page_size=10):
-    """Display a page of models with pagination info."""
+    """Display a page of models with pagination info and column titles."""
     start_idx = page * page_size
     end_idx = start_idx + page_size
     page_models = models[start_idx:end_idx]
@@ -56,9 +56,13 @@ def display_model_page(page, page_size=10):
     
     # Display header
     console.print(f"\r[{MAIN_COLOR}]Sage CLI - Model Selection[/]")
-    console.print(f"[dim]Page {page + 1} of {total_pages} | {len(models)} models available[/dim]")
-    console.print(f"[yellow]Choose from more than 500 models from https://openrouter.ai/models[/yellow]")
+    console.print(f"[dim]Page {page + 1} of {total_pages}[/dim]")
     console.print()
+    
+    # Display column titles
+    title_line = f"{'#':>3} {'Model':<43} | {'Price':<8} | {'Context Window':>12}"
+    console.print(f"[bold {MAIN_COLOR}]{title_line}[/bold {MAIN_COLOR}]")
+    console.print("[dim]" + "─" * len(title_line) + "[/dim]")
     
     # Create choices with formatted columns
     choices = []
@@ -81,7 +85,7 @@ def display_model_page(page, page_size=10):
         navigation_added = True
     
     # Add manual input and cancel options
-    choices.append(("🔍 Type model name manually", "manual_input"))
+    choices.append(("🔍 Choose from more than 500 models from https://openrouter.ai/models and type manually", "manual_input"))
     choices.append(("❌ Cancel", "cancel"))
     
     return choices

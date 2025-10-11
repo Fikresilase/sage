@@ -12,6 +12,7 @@ import time
 from .combiner import Combiner
 from .env_util import get_api_key
 from .select_models import select_model
+import os
 
 console = Console()
 
@@ -62,6 +63,13 @@ def display_footer():
     ownership.pad_left(width - len(ownership.plain))
     console.print(ownership)
 
+def display_chat_ready():
+    """Display the chat ready UI after operations like model selection."""
+    os.system('cls' if os.name == 'nt' else 'clear')
+    display_header()
+    display_footer()
+    console.print(f"[{ACCENT_COLOR}]Sage is ready. Type your message below.[/{ACCENT_COLOR}]")
+
 def chat():
     """
     Main chat function that sets up the UI and enters the interactive loop.
@@ -76,16 +84,12 @@ def chat():
     combiner = Combiner(api_key)
     
     # Display the static screen that perfectly matches the provided image
-    display_header()
-    display_footer()
+    display_chat_ready()
 
-    console.print(f"[{ACCENT_COLOR}]Sage is ready. Type your message below.[/{ACCENT_COLOR}]")
-    
     while True:
         try:       
             # Get user input using a clean, single-line prompt
             user_message = _get_user_input()
-            
             
             if not user_message:
                 console.print("[yellow]No message entered. Exiting chat...[/yellow]")
@@ -94,11 +98,25 @@ def chat():
             if user_message.lower() in ['exit', 'quit', 'bye']:
                 console.print(f"[{MAIN_COLOR}]👋 Goodbye![/{MAIN_COLOR}]")
                 break
+                
+            # Handle model selection without sending to AI
             if user_message.lower() == 'model':
                 selected_model = select_model()
                 if selected_model:
                     console.print(f"[green]✓ Model changed to: {selected_model}[/green]")
+                else:
+                    console.print("[yellow]Model selection cancelled[/yellow]")
+                # Redisplay the chat UI without sending request to AI
+                display_chat_ready()
+                continue
+                
+            # Handle voice mode (you can add similar logic for voice)
+            if user_message.lower() == 'voice':
+                console.print("[yellow]Voice mode feature coming soon...[/yellow]")
+                display_chat_ready()
+                continue
 
+            # Only send to AI if it's not a command
             # Get AI response with a spinner
             response = _get_ai_response_with_spinner(user_message, combiner)
             
@@ -108,8 +126,6 @@ def chat():
                 console.print("[red] No response from AI[/red]")
                 
             console.print()
-            
-            
             
         except KeyboardInterrupt:
             console.print(f"\n[{MAIN_COLOR}]👋 Chat session ended by user[/{MAIN_COLOR}]")
@@ -122,7 +138,6 @@ def _get_user_input() -> str:
     """Clean input prompt that visually matches the response boxes."""
     try:
         # Clear the prompt line and get user input
-        
         user_input = console.input(Text("> ", style="bold white"))
         console.print() 
         return user_input.strip()
