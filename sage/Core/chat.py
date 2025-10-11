@@ -9,9 +9,9 @@ from rich.live import Live
 from rich.status import Status
 from rich.table import Table
 import time
-
 from .combiner import Combiner
 from .env_util import get_api_key
+from .select_models import select_model
 
 console = Console()
 
@@ -94,6 +94,10 @@ def chat():
             if user_message.lower() in ['exit', 'quit', 'bye']:
                 console.print(f"[{MAIN_COLOR}]👋 Goodbye![/{MAIN_COLOR}]")
                 break
+            if user_message.lower() == 'model':
+                selected_model = select_model()
+                if selected_model:
+                    console.print(f"[green]✓ Model changed to: {selected_model}[/green]")
 
             # Get AI response with a spinner
             response = _get_ai_response_with_spinner(user_message, combiner)
