@@ -8,6 +8,7 @@ import subprocess
 from rich.console import Console
 from rich.prompt import Prompt
 import inquirer
+from sage.Core.select_models import select_model
 
 console = Console()
 
@@ -87,8 +88,8 @@ def setup_sage(root_path: Path = Path(".")):
     
     if is_sage_installed:
         choice = typer.prompt(
-            "Sage is already installed. Do you want to update your interface? (yes/no)", 
-            default="no"
+            "Sage is already installed. Do you want to update your interface? (y/n)", 
+            default="y"
         )
         
         if choice.strip().lower() not in ["y", "yes"]:
@@ -97,7 +98,7 @@ def setup_sage(root_path: Path = Path(".")):
         else:
             console.print(f"[{MAIN_COLOR}]Updating Sage interface...[/]")
     else:
-        choice = typer.prompt("Do you want to install Sage? (yes/no)", default="no")
+        choice = typer.prompt("Do you want to install Sage? (y/n)", default="y")
 
         if choice.strip().lower() not in ["y", "yes"]:
             console.print(f"[{ACCENT_COLOR}]Sage setup cancelled. Continuing to app...[/]")
@@ -139,6 +140,33 @@ def setup_sage(root_path: Path = Path(".")):
             console.print(f"[{ACCENT_COLOR}]No SAGE_API_KEY provided. You'll need to add it manually to .env[/]")
     else:
         console.print(f"[{MAIN_COLOR}]SAGE_API_KEY found in .env file[/]")
+    # Check if MODEL exists in .env and handle model selection
+    model_pattern = r'^\s*MODEL\s*=\s*[^\s#]+'
+    has_model = re.search(model_pattern, env_content, re.MULTILINE)
+    
+    if not has_model:
+        console.print(f"[{ACCENT_COLOR}]MODEL not found in .env file[/]")
+        try:
+            selected_model = select_model()
+            if selected_model:
+                # Add MODEL to .env content
+                if env_content and not env_content.endswith('\n'):
+                    env_content += '\n'
+                env_content += f"MODEL={selected_model}\n"
+                
+                # Write back to .env file
+                with env_file.open("w", encoding="utf-8") as f:
+                    f.write(env_content)
+                
+                console.print(f"[{MAIN_COLOR}]MODEL '{selected_model}' added to .env file[/]")
+            else:
+                console.print(f"[{ACCENT_COLOR}]No model selected. You'll need to add MODEL manually to .env[/]")
+        except KeyboardInterrupt:
+            console.print(f"\n[{ACCENT_COLOR}]Model selection interrupted[/]")
+        except Exception as e:
+            console.print(f"[{ACCENT_COLOR}]Error during model selection: {e}[/]")
+    else:
+        console.print(f"[{MAIN_COLOR}]MODEL found in .env file[/]")
 
     # Ensure Sage folder exists
     if not sage_dir.exists():

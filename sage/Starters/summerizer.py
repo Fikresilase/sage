@@ -29,7 +29,7 @@ def summarize_files(interface_file: Path = Path("Sage/interface.json")):
         console.print(f"[red]Error: {interface_file} not found[/red]")
         return
     
-    choice = typer.prompt("Do you want to summarize your files? (y/n)", default="n")
+    choice = typer.prompt("Do you want to summarize your files? (y/n)", default="y")
     if choice.strip().lower() not in ["y", "yes"]:
         console.print(f"[{ACCENT_COLOR}]Skipping file summarization...[/]")
         with interface_file.open("r", encoding="utf-8") as f:
