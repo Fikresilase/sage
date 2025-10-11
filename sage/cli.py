@@ -6,11 +6,12 @@ from sage.Core.chat import chat
 
 console = Console()
 app = typer.Typer()
+MAIN_COLOR = "#8B5CF6" 
 
 @app.command()
 def main():
     """Sage CLI - Complete project setup and analysis"""
-    console.print("[bold green]Sage CLI[/bold green]")
+    console.print(f"[{MAIN_COLOR}]Sage CLI[/{MAIN_COLOR}]")
     console.print("Welcome! Setting up and analyzing your project now...")
     try:
         # Setup Sage

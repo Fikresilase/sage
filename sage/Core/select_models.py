@@ -60,7 +60,7 @@ def display_model_page(page, page_size=10):
     console.print()
     
     # Display column titles
-    title_line = f"{'#':>3} {'Model':<43} | {'Price':<8} | {'Context Window':>12}"
+    title_line = f"{'#':>3} {'               Models':<43} | {'Price':<8} | {'Context Window':>12}"
     console.print(f"[bold {MAIN_COLOR}]{title_line}[/bold {MAIN_COLOR}]")
     console.print("[dim]" + "─" * len(title_line) + "[/dim]")
     
@@ -85,7 +85,7 @@ def display_model_page(page, page_size=10):
         navigation_added = True
     
     # Add manual input and cancel options
-    choices.append(("🔍 Choose from more than 500 models from https://openrouter.ai/models and type manually", "manual_input"))
+    choices.append(("🔍 Choose from more than 500 models from `https://openrouter.ai/models` and type manually", "manual_input"))
     choices.append(("❌ Cancel", "cancel"))
     
     return choices

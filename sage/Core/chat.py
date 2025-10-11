@@ -47,9 +47,9 @@ def display_header():
     console.print("Tips for getting started:", style="white")
     console.print("1. Ask questions, edit files, or run commands.")
     console.print("2. Be specific for the best results.")
-    console.print("3. Create [magenta]SAGE.txt[/magenta] files to customize your interactions with Sage.")
-    console.print("4. Type [cyan]model[/cyan] to select a model")
-    console.print("5. Type [cyan]voice[/cyan] to use the voice mode")
+    # console.print("3. Create [magenta]SAGE.txt[/magenta] files to customize your interactions with Sage.")
+    console.print("3. Type [cyan]model[/cyan] to select a model")
+    console.print("4. Type [cyan]voice[/cyan] to use the voice mode")
     console.print("\n")
 
 
@@ -65,7 +65,7 @@ def display_footer():
 
 def display_chat_ready():
     """Display the chat ready UI after operations like model selection."""
-    os.system('cls' if os.name == 'nt' else 'clear')
+    # os.system('cls' if os.name == 'nt' else 'clear')
     display_header()
     display_footer()
     console.print(f"[{ACCENT_COLOR}]Sage is ready. Type your message below.[/{ACCENT_COLOR}]")
@@ -118,8 +118,8 @@ def chat():
                 
             # Handle voice mode (you can add similar logic for voice)
             if user_message.lower() == 'voice':
-                console.print("[yellow] Voice mode feature coming soon...[/yellow]")
-                display_chat_ready()
+                console.print(f"[{ACCENT_COLOR}] Voice mode feature is soon... Use your fingers till then[/{ACCENT_COLOR}]")
+                # display_chat_ready()
                 continue
 
             # Only send to AI if it's not a command
