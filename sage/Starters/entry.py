@@ -9,6 +9,8 @@ from rich.console import Console
 from rich.prompt import Prompt
 import inquirer
 from sage.Core.select_models import select_model
+from .terminals import terminals
+from .common_ignors import common_ignores
 
 console = Console()
 
@@ -18,20 +20,6 @@ ACCENT_COLOR = "#ffffff"
 USER_COLOR = "#1D5ACA"   
 
 def get_terminal_choice():
-    """Let user choose their terminal from an interactive list with arrow keys"""
-    terminals = [
-        "powershell",
-        "cmd.exe", 
-        "bash",
-        "zsh",
-        "fish",
-        "sh",
-        "dash",
-        "ksh",
-        "tcsh",
-        "csh"
-    ]
-    
     questions = [
         inquirer.List(
             'terminal',
@@ -173,55 +161,7 @@ def setup_sage(root_path: Path = Path(".")):
         sage_dir.mkdir()
         console.print(f"[{MAIN_COLOR}]Created[/] {sage_dir}")
     else:
-        console.print(f"[{MAIN_COLOR}]Found[/] {sage_dir}")
-
-    # Create/update .sageignore file in Sage folder with common ignore patterns
-    common_ignores = [
-        "# Common build and dependency directories",
-        "node_modules/",
-        "__pycache__/",
-        ".pytest_cache/",
-        "target/",
-        "build/",
-        "dist/",
-        "bin/",
-        "obj/",
-        ".git/",
-        ".svn/",
-        "",
-        "# Dependency files",
-        "package-lock.json",
-        "yarn.lock",
-        "Pipfile.lock",
-        "poetry.lock",
-        "",
-        "# Environment and config files",
-        ".env",
-        ".venv/",
-        "venv/",
-        "env/",
-        ".idea/",
-        ".vscode/",
-        "",
-        "# OS generated files",
-        ".DS_Store",
-        "Thumbs.db",
-        "",
-        "# Logs and databases",
-        "*.log",
-        "*.sqlite",
-        "*.db",
-        "",
-        "# Compiled files",
-        "*.pyc",
-        "*.class",
-        "*.so",
-        "*.dll",
-        "",
-        "# Sage specific - don't scan Sage folder itself",
-        "Sage/"
-    ]
-    
+        console.print(f"[{MAIN_COLOR}]Found[/] {sage_dir}")    
     if not sageignore_file.exists():
         with sageignore_file.open("w", encoding="utf-8") as f:
             f.write("\n".join(common_ignores))
