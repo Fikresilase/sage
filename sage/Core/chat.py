@@ -99,20 +99,26 @@ def chat():
                 console.print(f"[{MAIN_COLOR}]👋 Goodbye![/{MAIN_COLOR}]")
                 break
                 
+                        # Handle model selection without sending to AI
             # Handle model selection without sending to AI
             if user_message.lower() == 'model':
-                selected_model = select_model()
-                if selected_model:
-                    console.print(f"[green]✓ Model changed to: {selected_model}[/green]")
-                else:
-                    console.print("[yellow]Model selection cancelled[/yellow]")
-                # Redisplay the chat UI without sending request to AI
-                display_chat_ready()
-                continue
+                try:
+                    selected_model = select_model()
+                    if selected_model:
+                        console.print(f"[{MAIN_COLOR}]✓ Model changed to: {selected_model}[/{MAIN_COLOR}]")
+                    else:
+                        console.print("[yellow]Model selection cancelled[/yellow]")
+                except KeyboardInterrupt:
+                    console.print("\n[yellow]Model selection interrupted by user[/yellow]")
+                except Exception as e:
+                    console.print(f"[red]✗ Error during model selection: {e}[/red]")
+                finally:
+                    # Continue to show the messages and get next input
+                    continue
                 
             # Handle voice mode (you can add similar logic for voice)
             if user_message.lower() == 'voice':
-                console.print("[yellow]Voice mode feature coming soon...[/yellow]")
+                console.print("[yellow] Voice mode feature coming soon...[/yellow]")
                 display_chat_ready()
                 continue
 

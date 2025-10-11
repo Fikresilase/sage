@@ -41,7 +41,7 @@ def save_model_to_env(model_name):
     
     # Write back to .env
     env_file.write_text("\n".join(new_lines) + "\n", encoding="utf-8")
-    console.print(f"[green]✓ Updated .env file with MODEL={model_name}[/green]")
+    console.print(f"[white]✓ Updated .env file with MODEL={model_name}[/white]")
 
 def display_model_page(page, page_size=10):
     """Display a page of models with pagination info and column titles."""
