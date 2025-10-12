@@ -2,6 +2,10 @@ from pathlib import Path
 import json
 import typer
 from rich.console import Console
+from rich.spinner import Spinner
+from rich.live import Live
+from rich.text import Text
+from rich.panel import Panel
 from openai import OpenAI
 from sage.Starters.env_utils import get_api_key, get_model
 from sage.Starters.file_utils import mark_files_unsummarized, update_interface_with_summaries
@@ -13,6 +17,26 @@ console = Console()
 MAIN_COLOR = "#8B5CF6" 
 ACCENT_COLOR = "#ffffff"        
 USER_COLOR = "#1D5ACA"   
+
+def create_fancy_loading_display():
+    """Create an enhanced loading display with multiple elements"""
+    spinner = Spinner("dots", style=MAIN_COLOR)
+    
+    # Create a more detailed loading panel
+    loading_content = Text()
+    loading_content.append("🤖 ", style="bold cyan")
+    loading_content.append("AI is analyzing and summarizing your files...\n", style="white")
+    loading_content.append("This may take a few moments depending on the number of files.", style="dim white")
+    
+    panel = Panel(
+        loading_content,
+        title="[bold]Sage AI[/bold]",
+        title_align="left",
+        border_style=MAIN_COLOR,
+        padding=(1, 2)
+    )
+    
+    return spinner, panel
 
 def summarize_files(interface_file: Path = Path("Sage/interface.json")):
     api_key = get_api_key()
@@ -56,13 +80,25 @@ def summarize_files(interface_file: Path = Path("Sage/interface.json")):
     with interface_file.open("r", encoding="utf-8") as f:
         interface_data = json.load(f)
     
-    final_summaries = analyze_and_summarize(client, model_name, interface_data)
+    # Create and display the enhanced loading animation
+    spinner, loading_panel = create_fancy_loading_display()
+    
+    with Live(
+        loading_panel, 
+        console=console, 
+        refresh_per_second=10,
+        transient=True
+    ) as live:
+        # Run the summarization process while showing the loader
+        final_summaries = analyze_and_summarize(client, model_name, interface_data)
+    
+    # Update interface with summaries
     update_interface_with_summaries(interface_data, final_summaries)
     
     with interface_file.open("w", encoding="utf-8") as f:
         json.dump(interface_data, f, indent=4)
     
-    console.print(f"[white]File summarization complete![/]")
+    console.print(f"[green]✓ File summarization complete![/green]")
     console.print(f"[white]Updated interface.json with summaries[/]")
 
 if __name__ == "__main__":
