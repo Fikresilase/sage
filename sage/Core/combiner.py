@@ -1,8 +1,6 @@
 import json
 from pathlib import Path
 from rich.console import Console
-
-# We assume these imports point to the correct files in your project structure
 from .api import send_to_openrouter
 from .orchestrator import Orchestrator
 from .prompts import SYSTEM_PROMPT
@@ -12,7 +10,6 @@ console = Console()
 class Combiner:
     def __init__(self, api_key: str):
         self.api_key = api_key
-        # The Orchestrator might still need the api_key, so we keep passing it here
         self.orchestrator = Orchestrator(api_key)
         self.conversation_history = []
         self.pending_actions = False
@@ -37,19 +34,17 @@ class Combiner:
 
             # Combine everything into the final prompt
             combined_prompt = f"""
-Project Interface JSON:
-{json.dumps(interface_data, indent=2)}
+    Project Interface JSON:
+    {json.dumps(interface_data, indent=2)}
 
-{history_context}
-{action_results}
+    {history_context}
+    {action_results}
 
-User Question: {user_prompt}
+    User Question: {user_prompt}
 
-Please provide a helpful response based on the project structure and the user's question.
-"""
+    Please provide a helpful response based on the project structure and the user's question.
+    """
 
-            # --- FIX 1: Removed 'api_key' argument from this call ---
-            # The function now gets the key from the environment by itself.
             ai_response_text = send_to_openrouter(
                 system_prompt=SYSTEM_PROMPT,
                 user_prompt=combined_prompt
@@ -71,12 +66,15 @@ Please provide a helpful response based on the project structure and the user's 
                     "pending": True
                 })
 
-                # ⚠️ IMMEDIATELY send orchestrator results back to AI
+                #  KEY CHANGE: Always send orchestrator results back to AI
                 follow_up_response = self._get_ai_followup(orchestrator_response, interface_data)
 
-                # Update interface with follow-up AI response if needed
-                if "text" in follow_up_response:
+                #  KEY CHANGE: Update interface if AI explicitly says "yes" in "update" field - NO OTHER CONDITIONS
+                if follow_up_response.get("update", "").lower() == "yes":
                     self.orchestrator.update_interface_json(follow_up_response)
+                    console.print("[green]✓ Interface JSON updated per AI request[/green]")
+                else:
+                    console.print("[yellow] Interface JSON not updated - AI did not request update[/yellow]")
 
                 # Store the follow-up response
                 self.conversation_history.append({
@@ -85,15 +83,17 @@ Please provide a helpful response based on the project structure and the user's 
                     "pending": False
                 })
 
-                # Return only the follow-up AI's text to user (never raw orchestrator messages)
+                # Return only the follow-up AI's text to user
                 return follow_up_response.get("text", "").strip()
 
             else:
-                # No actions taken, normal flow
-                if "text" in ai_response:
-                    # Update interface with AI's full JSON (cleaned)
+                # No actions taken, normal flow - but check if AI wants to update interface anyway
+                #  NEW: Check if AI wants to update interface even without actions
+                if ai_response.get("update", "").lower() == "yes":
                     self.orchestrator.update_interface_json(ai_response)
+                    console.print("[green]✓ Interface JSON updated per AI request (no actions taken)[/green]")
 
+                # Store the response
                 self.conversation_history.append({
                     "user": user_prompt,
                     "ai": ai_response,
@@ -102,7 +102,7 @@ Please provide a helpful response based on the project structure and the user's 
                 })
                 self.pending_actions = False
 
-                # Return only AI's text (never raw orchestrator messages)
+                # Return only AI's text
                 return ai_response.get("text", "").strip()
 
         except Exception as e:
@@ -113,23 +113,27 @@ Please provide a helpful response based on the project structure and the user's 
         """Immediately send orchestrator results back to AI for processing"""
 
         followup_prompt = f"""
-Project Interface JSON:
-{json.dumps(interface_data, indent=2)}
+    Project Interface JSON:
+    {json.dumps(interface_data, indent=2)}
 
-🚨 **ORCHESTRATOR EXECUTION RESULTS:**
-{orchestrator_results}
+     **ORCHESTRATOR EXECUTION RESULTS:**
+    {orchestrator_results}
 
-Please process these orchestrator results and provide a user-friendly response.
-You should:
-1. Summarize what was accomplished (or what failed) in a natural way
-2. Update the interface.json if the project structure changed
-3. Suggest next steps if appropriate
+    Please process these orchestrator results and provide a user-friendly response.
+    You should:
+    1. Summarize what was accomplished (or what failed) in a natural way
+    2. Suggest next steps if appropriate
 
-Respond in the standard JSON format with a "text" field for the user message.
-Any additional file operations or interface updates should be included in the response.
-"""
+     **Include an "update" field in your response with either "yes" or "no"**
+    - Say "yes" if you want to update the project interface JSON with any structural changes
+    - Say "no" if no interface update is needed
 
-        # --- FIX 2: Removed 'api_key' argument from this call as well ---
+    Respond in the standard JSON format with:
+    - "text": user-friendly message
+    - "update": "yes" or "no"
+    - Any additional file operations if needed
+    """
+
         ai_response_text = send_to_openrouter(
             system_prompt=SYSTEM_PROMPT,
             user_prompt=followup_prompt
@@ -158,11 +162,10 @@ Any additional file operations or interface updates should be included in the re
             cleaned_text = cleaned_text.strip()
             return json.loads(cleaned_text)
         except json.JSONDecodeError:
-            console.print("[yellow]⚠️ AI response is not valid JSON, treating as text[/yellow]")
-            return {"text": response_text}
+            console.print("[yellow] AI response is not valid JSON, treating as text[/yellow]")
+            return {"text": response_text, "update": "no"}  # Default to no update
 
     def _load_interface_data(self):
-        # Assuming "Sage" is a directory in the project root
         interface_file = Path("Sage/interface.json")
         if not interface_file.exists():
             console.print("[red]x interface.json not found. Please run setup first.[/red]")
@@ -178,7 +181,7 @@ Any additional file operations or interface updates should be included in the re
         if not self.conversation_history:
             return ""
 
-        history_parts = ["\n📝 Conversation History:"]
+        history_parts = ["\n Conversation History:"]
         for i, entry in enumerate(self.conversation_history[-3:], 1):
             history_parts.append(f"Exchange {i+len(self.conversation_history)-3}:")
             history_parts.append(f"  User: {entry['user']}")
@@ -192,7 +195,6 @@ Any additional file operations or interface updates should be included in the re
         return "\n".join(history_parts)
 
 # Backward compatibility function
-# This function's logic remains correct
 def get_ai_response(user_prompt: str, api_key: str) -> str:
     """
     Creates a Combiner instance and gets an AI response.

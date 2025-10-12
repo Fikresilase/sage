@@ -36,7 +36,7 @@ class Orchestrator:
                         # Edit file
                         result = self._edit_file(file_path, request["edit"])
                         if result:
-                            program_results.append(f"✅ {file_path} edited successfully")
+                            program_results.append(f" {file_path} edited successfully")
                         else:
                             program_results.append(f"x Failed to edit {file_path}")
                         actions_taken = True
@@ -45,7 +45,7 @@ class Orchestrator:
                         # Write new file
                         result = self._write_file(file_path, request["write"])
                         if result:
-                            program_results.append(f"✅ {file_path} created successfully")
+                            program_results.append(f" {file_path} created successfully")
                         else:
                             program_results.append(f"x Failed to create {file_path}")
                         actions_taken = True
@@ -54,7 +54,7 @@ class Orchestrator:
                         # Delete file
                         result = self._delete_file(file_path)
                         if result:
-                            program_results.append(f"✅ {file_path} deleted successfully")
+                            program_results.append(f" {file_path} deleted successfully")
                         else:
                             program_results.append(f"x Failed to delete {file_path}")
                         actions_taken = True
@@ -63,7 +63,7 @@ class Orchestrator:
                         # Rename file
                         result = self._rename_file(file_path, request["rename"])
                         if result:
-                            program_results.append(f"✅ {file_path} renamed to {request['rename']} successfully")
+                            program_results.append(f" {file_path} renamed to {request['rename']} successfully")
                         else:
                             program_results.append(f"x Failed to rename {file_path} to {request['rename']}")
                         actions_taken = True
@@ -71,7 +71,19 @@ class Orchestrator:
             # Handle command execution
             if "command" in ai_response:
                 cmd_data = ai_response["command"]
-                commands = cmd_data.get("commands", [])
+                
+                # Handle multiple command formats
+                commands = []
+                if "commands" in cmd_data:
+                    commands = cmd_data["commands"]
+                elif "command" in cmd_data:
+                    # Handle single command or list of commands
+                    cmd_value = cmd_data["command"]
+                    if isinstance(cmd_value, list):
+                        commands = cmd_value
+                    else:
+                        commands = [cmd_value]
+                
                 if commands:
                     for cmd in commands:
                         result = self._execute_command(cmd)
@@ -105,7 +117,7 @@ class Orchestrator:
             with open(self.interface_file, 'w', encoding='utf-8') as f:
                 json.dump(cleaned_data, f, indent=2)
             
-            console.print("[green]✅ Interface JSON updated successfully[/green]")
+            console.print("[green] Interface JSON updated successfully[/green]")
             return True
         except Exception as e:
             console.print(f"[red]x Error updating interface JSON: {e}[/red]")
@@ -133,10 +145,7 @@ class Orchestrator:
             start = edit_data.get("start", 1) - 1  # Convert to 0-based
             end = edit_data.get("end", len(content))
             new_content = edit_data.get("content", [])
-            
-            # Replace the specified lines
             updated_content = content[:start] + new_content + content[end:]
-            
             path.write_text("\n".join(updated_content), encoding='utf-8')
             return True
         except Exception as e:
@@ -174,29 +183,16 @@ class Orchestrator:
             if not old_path_obj.exists():
                 console.print(f"[red]Error: File to rename not found: {old_path}[/red]")
                 return False
-            
-            # Handle different new_name formats:
-            # - "userform" -> rename in same directory with same extension
-            # - "src/components/ui/userform.tsx" -> full path move
             new_path_obj = Path(new_name)
-            
-            # If new_name is just a filename without path, use same directory
             if new_path_obj.parent == Path('.'):
                 new_path_obj = old_path_obj.parent / new_name
-            
-            # Ensure the target directory exists
             new_path_obj.parent.mkdir(parents=True, exist_ok=True)
-            
-            # Perform the rename/move
             old_path_obj.rename(new_path_obj)
-            
-            console.print(f"[green]✅ Renamed {old_path} to {new_path_obj}[/green]")
+            console.print(f"[green] Renamed {old_path} to {new_path_obj}[/green]")
             return True
-            
         except Exception as e:
             console.print(f"[red]Error renaming file {old_path} to {new_name}: {e}[/red]")
             return False
-    
     def _execute_command(self, command: str) -> str:
         """Execute shell command."""
         try:

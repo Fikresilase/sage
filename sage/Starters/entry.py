@@ -227,9 +227,11 @@ def setup_sage(root_path: Path = Path(".")):
             "summary": "",
             "terminal": selected_terminal,
             "platform": detected_platform,
-            "commands": []
+            "commands": [],
+            "interactive":"yes/no"
         },
-        "text": "place holder for your responce"
+        "text": "place holder for your responce",
+        "update":"yes/no"
     }
 
     # Create/update interface.json inside Sage folder
