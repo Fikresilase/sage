@@ -16,102 +16,86 @@ class Combiner:
 
     def get_ai_response(self, user_prompt: str) -> str:
         try:
-            # Load interface data (flat structure)
             interface_data = self._load_interface_data()
             if not interface_data:
-                console.print("[red]x Error: Could not load project interface data. Please run setup first.[/red]")
                 return "x Error: Could not load project interface data. Please run setup first."
 
-            # Add conversation history to context
             history_context = self._format_conversation_history()
-
-            # If we have pending actions from previous step, include the results
+            
             action_results = ""
             if self.pending_actions and self.conversation_history:
                 last_entry = self.conversation_history[-1]
                 if "action_results" in last_entry:
                     action_results = f"\nPrevious Action Results:\n{last_entry['action_results']}"
 
-            # Combine everything into the final prompt
-            combined_prompt = f"""
-    Project Interface JSON:
+            combined_prompt = f"""Project Interface JSON:
     {json.dumps(interface_data, indent=2)}
 
     {history_context}
     {action_results}
 
-    User Question: {user_prompt}
-
-    Please provide a helpful response based on the project structure and the user's question.
-    """
+    User Question: {user_prompt}"""
 
             ai_response_text = send_to_openrouter(
                 system_prompt=SYSTEM_PROMPT,
                 user_prompt=combined_prompt
             )
 
-            # Parse AI response
             ai_response = self._parse_ai_response(ai_response_text)
-
-            # Process through orchestrator - this returns action results
             orchestrator_response = self.orchestrator.process_ai_response(ai_response)
+            
+            # Always get results from dict (orchestrator now always returns dict)
+            results_text = orchestrator_response.get("results", "")
+            has_actions = orchestrator_response.get("has_actions", False)
 
-            # Check if actions were taken (orchestrator returns action results)
-            if self._contains_action_results(orchestrator_response):
-                # Store the initial AI response and orchestrator results
+            if has_actions:
                 self.conversation_history.append({
                     "user": user_prompt,
                     "ai": ai_response,
-                    "action_results": orchestrator_response,
+                    "action_results": results_text,
                     "pending": True
                 })
 
-                #  KEY CHANGE: Always send orchestrator results back to AI
-                follow_up_response = self._get_ai_followup(orchestrator_response, interface_data)
+                follow_up_response = self._get_ai_followup(results_text, interface_data)
 
-                #  KEY CHANGE: Update interface if AI explicitly says "yes" in "update" field - NO OTHER CONDITIONS
                 if follow_up_response.get("update", "").lower() == "yes":
                     self.orchestrator.update_interface_json(follow_up_response)
-                    console.print("[green]✓ Interface JSON updated per AI request[/green]")
-                else:
-                    console.print("[yellow] Interface JSON not updated - AI did not request update[/yellow]")
+                    console.print("[green]✓ Interface JSON updated[/green]")
 
-                # Store the follow-up response
                 self.conversation_history.append({
                     "user": "[System: Orchestrator Results]",
                     "ai": follow_up_response,
                     "pending": False
                 })
 
-                # Return only the follow-up AI's text to user
                 return follow_up_response.get("text", "").strip()
 
             else:
-                # No actions taken, normal flow - but check if AI wants to update interface anyway
-                #  NEW: Check if AI wants to update interface even without actions
                 if ai_response.get("update", "").lower() == "yes":
                     self.orchestrator.update_interface_json(ai_response)
-                    console.print("[green]✓ Interface JSON updated per AI request (no actions taken)[/green]")
+                    console.print("[green]✓ Interface JSON updated (no actions)[/green]")
 
-                # Store the response
                 self.conversation_history.append({
                     "user": user_prompt,
                     "ai": ai_response,
-                    "orchestrator": orchestrator_response,
+                    "orchestrator": results_text,
                     "pending": False
                 })
                 self.pending_actions = False
 
-                # Return only AI's text
-                return ai_response.get("text", "").strip()
+                return ai_response.get("text", "").strip()  # FIXED: Inside else block
 
         except Exception as e:
             console.print(f"[red]x Error in combiner: {e}[/red]")
             return f"Error: {str(e)}"
 
-    def _get_ai_followup(self, orchestrator_results: str, interface_data: dict) -> dict:
-        """Immediately send orchestrator results back to AI for processing"""
+    def _contains_action_results(self, response) -> bool:
+        # Remove string fallback - orchestrator always returns dict now
+        if isinstance(response, dict):
+            return response.get("has_actions", False)
+        return False
 
+    def _get_ai_followup(self, orchestrator_results: str, interface_data: dict) -> dict:
         followup_prompt = f"""
     Project Interface JSON:
     {json.dumps(interface_data, indent=2)}
@@ -139,18 +123,17 @@ class Combiner:
             user_prompt=followup_prompt
         )
 
-        # Parse and return the AI's follow-up response
         return self._parse_ai_response(ai_response_text)
 
-    def _contains_action_results(self, response: str) -> bool:
-        """Check if response contains action results (success/error messages)"""
-        if not isinstance(response, str):
-            return False
-
-        action_indicators = ["✅", "x", "edited successfully", "created successfully",
-                           "deleted successfully", "Command:", "File content for",
-                           "renamed successfully", "Error:", "Failed to"]
-        return any(indicator in response for indicator in action_indicators)
+    def _contains_action_results(self, response) -> bool:
+        if isinstance(response, dict):
+            return response.get("has_actions", False)
+        elif isinstance(response, str):
+            action_indicators = ["✅", "❌", "edited successfully", "created successfully",
+                               "deleted successfully", "Command:", "File content for",
+                               "renamed successfully", "Error:", "Failed to"]
+            return any(indicator in response for indicator in action_indicators)
+        return False
 
     def _parse_ai_response(self, response_text: str) -> dict[str, any]:
         try:
@@ -163,7 +146,7 @@ class Combiner:
             return json.loads(cleaned_text)
         except json.JSONDecodeError:
             console.print("[yellow] AI response is not valid JSON, treating as text[/yellow]")
-            return {"text": response_text, "update": "no"}  # Default to no update
+            return {"text": response_text, "update": "no"}
 
     def _load_interface_data(self):
         interface_file = Path("Sage/interface.json")
@@ -194,11 +177,6 @@ class Combiner:
 
         return "\n".join(history_parts)
 
-# Backward compatibility function
 def get_ai_response(user_prompt: str, api_key: str) -> str:
-    """
-    Creates a Combiner instance and gets an AI response.
-    This is kept for backward compatibility.
-    """
     combiner = Combiner(api_key)
     return combiner.get_ai_response(user_prompt)

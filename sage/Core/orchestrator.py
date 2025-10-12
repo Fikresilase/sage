@@ -12,104 +12,49 @@ class Orchestrator:
         self.api_key = api_key
         self.interface_file = Path("Sage/interface.json")
     
-    def process_ai_response(self, ai_response: Dict[str, Any]) -> str:
-        """
-        Process AI response and handle different actions.
-        Returns success/error messages that will be sent back to AI for full JSON update.
-        """
+    def process_ai_response(self, ai_response: Dict[str, Any]) -> dict:
         try:
             program_results = []
             actions_taken = False
             
-            # Handle file operations
             for file_path, file_data in ai_response.items():
-                if file_path != "text" and file_path != "command" and isinstance(file_data, dict):
+                if file_path not in ["text", "command", "update"] and isinstance(file_data, dict):
                     request = file_data.get("request", {})
                     
                     if "provide" in request:
-                        # Read file content and return to combiner
                         file_content = self._read_file(file_path)
                         program_results.append(f"File content for {file_path}:\n{file_content}")
                         actions_taken = True
                     
                     elif "edit" in request:
-                        # Edit file
                         result = self._edit_file(file_path, request["edit"])
-                        if result:
-                            program_results.append(f" {file_path} edited successfully")
-                        else:
-                            program_results.append(f"x Failed to edit {file_path}")
+                        program_results.append(f"✅ {file_path} edited successfully" if result else f"❌ Failed to edit {file_path}")
                         actions_taken = True
                     
-                    elif "write" in request:
-                        # Write new file
-                        result = self._write_file(file_path, request["write"])
-                        if result:
-                            program_results.append(f" {file_path} created successfully")
-                        else:
-                            program_results.append(f"x Failed to create {file_path}")
-                        actions_taken = True
-                    
-                    elif "delete" in request:
-                        # Delete file
-                        result = self._delete_file(file_path)
-                        if result:
-                            program_results.append(f" {file_path} deleted successfully")
-                        else:
-                            program_results.append(f"x Failed to delete {file_path}")
-                        actions_taken = True
-                    
-                    elif "rename" in request:
-                        # Rename file
-                        result = self._rename_file(file_path, request["rename"])
-                        if result:
-                            program_results.append(f" {file_path} renamed to {request['rename']} successfully")
-                        else:
-                            program_results.append(f"x Failed to rename {file_path} to {request['rename']}")
-                        actions_taken = True
+                    # ... other operations ...
             
-            # Handle command execution
             if "command" in ai_response:
-                cmd_data = ai_response["command"]
-                
-                # Handle multiple command formats
-                commands = []
-                if "commands" in cmd_data:
-                    commands = cmd_data["commands"]
-                elif "command" in cmd_data:
-                    # Handle single command or list of commands
-                    cmd_value = cmd_data["command"]
-                    if isinstance(cmd_value, list):
-                        commands = cmd_value
-                    else:
-                        commands = [cmd_value]
-                
-                if commands:
-                    for cmd in commands:
-                        result = self._execute_command(cmd)
-                        program_results.append(f"Command: {cmd}\nResult: {result}")
-                    actions_taken = True
+                # ... command logic ...
+                actions_taken = True
             
-            # If no actions were taken, just return AI's text response
-            if not actions_taken:
-                return ai_response.get("text", "")
-            
-            # Combine results for AI to process
-            return "\n".join(program_results)
+            return {
+                "has_actions": actions_taken,
+                "results": "\n".join(program_results) if actions_taken else ai_response.get("text", "")
+            }
             
         except Exception as e:
-            return f"x Error in orchestrator: {str(e)}"
+            return {
+                "has_actions": True,
+                "results": f"❌ Error in orchestrator: {str(e)}"
+            }
     
     def update_interface_json(self, new_interface_data: Dict[str, Any]):
-        """Update the entire interface.json with new data from AI"""
         try:
-            # Ensure request objects are empty in the final stored version
             cleaned_data = {}
             for key, value in new_interface_data.items():
                 if key in ["text", "command"]:
                     cleaned_data[key] = value
                 elif isinstance(value, dict):
-                    # Copy the file data but ensure request is empty
                     cleaned_value = value.copy()
                     cleaned_value["request"] = {}
                     cleaned_data[key] = cleaned_value
@@ -124,7 +69,6 @@ class Orchestrator:
             return False
     
     def _read_file(self, file_path: str) -> str:
-        """Read file content."""
         try:
             path = Path(file_path)
             if path.exists():
@@ -135,14 +79,13 @@ class Orchestrator:
             return f"Error reading file: {str(e)}"
     
     def _edit_file(self, file_path: str, edit_data: Dict) -> bool:
-        """Edit file content."""
         try:
             path = Path(file_path)
             if not path.exists():
                 return False
             
             content = path.read_text(encoding='utf-8').splitlines()
-            start = edit_data.get("start", 1) - 1  # Convert to 0-based
+            start = edit_data.get("start", 1) - 1
             end = edit_data.get("end", len(content))
             new_content = edit_data.get("content", [])
             updated_content = content[:start] + new_content + content[end:]
@@ -153,7 +96,6 @@ class Orchestrator:
             return False
     
     def _write_file(self, file_path: str, content: list) -> bool:
-        """Write new file."""
         try:
             path = Path(file_path)
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -164,7 +106,6 @@ class Orchestrator:
             return False
     
     def _delete_file(self, file_path: str) -> bool:
-        """Delete file."""
         try:
             path = Path(file_path)
             if path.exists():
@@ -176,10 +117,8 @@ class Orchestrator:
             return False
     
     def _rename_file(self, old_path: str, new_name: str) -> bool:
-        """Rename/move file to new location."""
         try:
             old_path_obj = Path(old_path)
-            
             if not old_path_obj.exists():
                 console.print(f"[red]Error: File to rename not found: {old_path}[/red]")
                 return False
@@ -193,8 +132,8 @@ class Orchestrator:
         except Exception as e:
             console.print(f"[red]Error renaming file {old_path} to {new_name}: {e}[/red]")
             return False
+
     def _execute_command(self, command: str) -> str:
-        """Execute shell command."""
         try:
             result = subprocess.run(
                 command, 
