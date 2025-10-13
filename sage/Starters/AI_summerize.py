@@ -26,7 +26,7 @@ def analyze_and_summarize(client, model_name, interface_data):
 
 def _analyze_structure(client, model_name, interface_data):    
     full_prompt = f"{system_prompt}\n\nProject Structure:\n{json.dumps(interface_data, indent=2)}\n\nProvide your analysis as JSON:"
-    
+    # console.print(f"[yellow]SENDING TO AI:\n{full_prompt}[/yellow]")
     try:
         completion = client.chat.completions.create(
             extra_headers={
@@ -44,11 +44,13 @@ def _analyze_structure(client, model_name, interface_data):
         
         response_text = completion.choices[0].message.content.strip()
         json_str = _extract_json(response_text)
+        # console.print(f"[green]RECEIVED FROM AI:\n{response_text}[/green]")
         summaries = json.loads(json_str)
         return summaries
     except Exception as e:
         console.print(f"[red]Error in structure analysis: {e}[/red]")
         return {}
+    
 
 def _get_files_needing_content(summaries):
     files = [path for path, data in summaries.items() 
@@ -115,3 +117,6 @@ def _extract_json(text):
     elif "```" in text:
         return text.split("```")[1].split("```")[0].strip()
     return text
+
+
+
