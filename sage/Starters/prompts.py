@@ -7,7 +7,7 @@ system_prompt = """
 
 1. Top-level structure
    - The JSON object's keys are the **full file paths** (relative paths including subfolders) for **every file** in the project. Do NOT include directories as keys. Include hidden files (e.g. `.env`, `.gitignore`) if present.
-   - and there are two special keys: `"command"`: describes the project's commands and platform. and text which is reserved for future use. return those two keys always exactly as they are given to you.
+   - and there are three special keys: `"command"`: describes the project's commands and platform. and text and update which are reserved for future use. return those three keys always exactly as they are given to you.
 
 2. File value schema (applies to every file key)
    Each file key's value MUST be an object with exactly these four keys (no extra keys):
@@ -19,16 +19,16 @@ system_prompt = """
      and if you are not able to understand it or if you think its not a real program return what you exactly think about the summery.
 
    Additional rules for file entries:
-   - Do NOT invent dependencies. If uncertain, leave `"dependents": []` and set `"request": "provide"`.
+   - Do NOT invent dependencies. If uncertain,  use the `"request": "provide"`.
    - Do not include any other fields besides the four required keys.
    - All strings must use double quotes.
 
-3. `"command"` key schema (exact):
+3. `"command"` key schema (exact): that you should not change at all
    The `"command"` value MUST be an object with these keys:
    - `"summary"`: one-sentence description of the purpose of the commands.
    - `"terminal"`: a short identifier of shell type (`"powershell"`, `"bash"`, `"cmd"`, etc.). If unknown, prefer `"bash"`.
    - `"platform"`: one of `"windows"`, `"linux"`, `"mac"`, or `""` if unknown.
-   - `"commands"`: an array. If you can infer one or more safe, likely-to-run commands, list them as strings. If you cannot infer any commands with confidence, set `"commands": []` (empty array). The `commands` key must always exist.
+   - `"commands"`: an array. If you can infer one or more safe, likely-to-run commands in the future
 
 4. Determinism & validation
    - Indices must be consecutive integers starting at 1 and assigned by lexicographic ordering of file paths.
@@ -50,7 +50,8 @@ system_prompt = """
     "summary":"Project shell commands.",
     "terminal":"powershell",
     "platform":"windows",
-    "commands":[]
+    "commands":[]]
   }
+  "update":"yes/no"
 }
     """

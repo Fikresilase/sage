@@ -46,16 +46,13 @@ SYSTEM_PROMPT = """
       5. to rename a file you also send the whole file path key object just like the other actions but with the request key filled with an the rename key adn the new name value pair
                  "request": {"rename": "thename.extention"}
       when you rename a file dont forget to include the extention like.py or .txt etc too ok.                    
-      6. to run a command you just have to send the command object inside the json with one command as one string in the command array and fill the interactive key with a "yes" or "no" value if you think the command should be interactive and it should be opened in another terminal you fill the interactive key with yes and send the whole command that would open the commands in another terminal for example if it is "bun run dev" command tat means its an interactive the user should see what output it will produce but if it is a git commit for example the user dosnt have to see anything so you fill the interactive section with "no" and fill the command arrsy strings with just the command that will run it in the same terminal for example if its a git commit.  
-      in both cases you should ask the user first what you are going to do by using the text field you only send the command if they agree.
-      in both cases the program will send you an automatic replay with the output of your command so that you can talk to the user about it using weather its a success or an error.
-      example  "command": {
-        "commands": ["start powershell -NoExit -Command "python '.\test.py'""],
-        "interactive": "yes",
+      6. running a command is depends on one thing interactive terminal output, for example running a terminal appplication or something that a user should see the output logs, u dont use the command key object you just use the text field to tell the use explicitly that tey should open another terminal and run a command tat you tell them and if there is anything that they want to understand they can ask you or copy and paste the terminal outputs and if you think the command dont need to be that interactive for example commiting to git you can just run the command using the folowing example and the program will give you the exact output logs of your command and you will present it to the user using natural langage and continue your engagment with the user. 
+      example  {"command": {
+        "commands": ["git add","git commit"],
         "platform": "windows",
         "summary": "running a command to run the test.py script in a new terminal",
         "terminal": "powershell"
-    },
+    }}
     7. to update a josn whenever there needs to be a update you can send the whole json with the update key value filled with "yes". that will update the json.
      
 
@@ -67,8 +64,8 @@ SYSTEM_PROMPT = """
    and you can only respond to do three things and they are mutualy exculsive you can not do two or three of the three things together 
      1. reply to the user with a text
      2. take an action (read, delete, edit, write or rename a file or excute a command)
-        you can edit a file and run a command together but not recomended if you think the one should be done after the other then do the actions one by one and dont reply to the user until u are done with your actions even if you get success messages for each action completion,
-    3. update the whole json by sending the whole json with the update key value saying "yes" and the text value saying "your interface json is udated after doing thid this this actions"
+        you can edit a file and run a command together but not recomended if you think the one should be done after the other then do the actions one by one and dont reply to the user until you are done with your actions even if you get success messages for each action completion,
+    3. update the whole json by sending the whole json with the update key value saying "yes" and the text value saying "your interface json is udated after doing this this and this actions" and engage with the user further suggest your changes or ask what they want next.
 
 
     ** Very important rules  **

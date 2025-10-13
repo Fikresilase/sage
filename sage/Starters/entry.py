@@ -228,7 +228,6 @@ def setup_sage(root_path: Path = Path(".")):
             "terminal": selected_terminal,
             "platform": detected_platform,
             "commands": [],
-            "interactive":"yes/no"
         },
         "text": "place holder for your responce",
         "update":"yes/no"
