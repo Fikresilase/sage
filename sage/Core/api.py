@@ -27,9 +27,9 @@ def send_to_openrouter(system_prompt: str, user_prompt: str) -> str:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": user_prompt})
         # Log prompts
-        # console.print("\n[bold yellow]📝 Full System Prompt Sent to AI:[/bold yellow]")
+        # console.print("\n[bold yellow] Full System Prompt Sent to AI:[/bold yellow]")
         # console.print(system_prompt)
-        # console.print("\n[bold yellow]💬 Full User Prompt Sent to AI:[/bold yellow]")
+        # console.print("\n[bold yellow] Full User Prompt Sent to AI:[/bold yellow]")
         # console.print(user_prompt)
         console.print("\n[bold cyan]🔹 Sending request to OpenRouter...[/bold cyan]")
         completion = client.chat.completions.create(
@@ -44,7 +44,7 @@ def send_to_openrouter(system_prompt: str, user_prompt: str) -> str:
             max_tokens=10000,
         )
         ai_response = completion.choices[0].message.content
-        # console.print("\n[bold green]✅ Full AI Response Received:[/bold green]")
+        # console.print("\n[bold green] Full AI Response Received:[/bold green]")
         # console.print(ai_response)
         return ai_response.strip()
     except Exception as e:

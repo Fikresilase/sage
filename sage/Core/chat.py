@@ -141,12 +141,16 @@ def chat():
             break
 
 def _get_user_input() -> str:
-    """Clean input prompt that visually matches the response boxes."""
+    """Enter for new lines, empty line to submit"""
     try:
-        # Clear the prompt line and get user input
-        user_input = console.input(Text("> ", style="bold white"))
-        console.print() 
-        return user_input.strip()
+        console.print("[dim]Type your message. Empty line to submit.[/dim]")
+        lines = []
+        while True:
+            line = console.input(Text("│ " if lines else "> ", style="bold white"))
+            if not line and lines:  # Empty line submits
+                console.print()
+                return "\n".join(lines)
+            lines.append(line)
     except (KeyboardInterrupt, EOFError):
         return ""
 
