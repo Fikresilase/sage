@@ -22,6 +22,7 @@ system_prompt = """
    - Do NOT invent dependencies. If uncertain,  use the `"request": "provide"`.
    - Do not include any other fields besides the four required keys.
    - All strings must use double quotes.
+   - if files are images or they are not a code you can not use the provide key always guess or fill the summery value just as "image"
 
 3. `"command"` key schema (exact): that you should not change at all
    The `"command"` value MUST be an object with these keys:
