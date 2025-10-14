@@ -76,7 +76,7 @@ def setup_sage(root_path: Path = Path(".")):
     
     if is_sage_installed:
         choice = typer.prompt(
-            "Sage is already installed. Do you want to update your interface? (y/n)", 
+            "Sage is already installed. Do you want to update what sage knows (the interface)(y/n)", 
             default="y"
         )
         

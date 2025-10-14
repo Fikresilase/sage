@@ -44,7 +44,7 @@ def display_header():
     console.print()
     
     # --- Tips for getting started ---
-    console.print("Tips for getting started:", style="white")
+    console.print("Welcome to Sage:", style="white")
     console.print("1. Ask questions, edit files, or run commands.")
     console.print("2. Be specific for the best results.")
     # console.print("3. Create [magenta]SAGE.txt[/magenta] files to customize your interactions with Sage.")
@@ -118,7 +118,7 @@ def chat():
                 
             # Handle voice mode (you can add similar logic for voice)
             if user_message.lower() == 'voice':
-                console.print(f"[{ACCENT_COLOR}] Voice mode feature is soon... Use your fingers till then[/{ACCENT_COLOR}]")
+                console.print(f"[{ACCENT_COLOR}] Voice mode feature comming soon... Use your fingers till then[/{ACCENT_COLOR}]")
                 # display_chat_ready()
                 continue
 
@@ -153,7 +153,7 @@ def _get_user_input() -> str:
 def _get_ai_response_with_spinner(user_message: str, combiner: Combiner) -> str:
     """Get AI response with a loading spinner."""
     with Status(
-        f"[bold {MAIN_COLOR}]🤔 Sage is thinking...[/bold {MAIN_COLOR}]", 
+        f"[bold {MAIN_COLOR}] Sage is thinking...[/bold {MAIN_COLOR}]", 
         spinner="dots",
         spinner_style=MAIN_COLOR
     ) as status:

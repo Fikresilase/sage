@@ -24,8 +24,8 @@ def create_fancy_loading_display():
     
     # Create a more detailed loading panel
     loading_content = Text()
-    loading_content.append("🤖 ", style="bold cyan")
-    loading_content.append("AI is analyzing and summarizing your files...\n", style="white")
+    loading_content.append(" ", style="bold cyan")
+    loading_content.append("🧙 Sage is understanding and summarizing your files...\n", style="white")
     loading_content.append("This may take a few moments depending on the number of files.", style="dim white")
     
     panel = Panel(
@@ -53,7 +53,7 @@ def summarize_files(interface_file: Path = Path("Sage/interface.json")):
         console.print(f"[red]Error: {interface_file} not found[/red]")
         return
     
-    choice = typer.prompt("Do you want to summarize your files? (y/n)", default="y")
+    choice = typer.prompt("Do you want to let Sage access and understand your file structure (y/n)", default="y")
     if choice.strip().lower() not in ["y", "yes"]:
         console.print(f"[{ACCENT_COLOR}]Skipping file summarization...[/]")
         with interface_file.open("r", encoding="utf-8") as f:
