@@ -10,17 +10,19 @@ from rich.status import Status
 from rich.table import Table
 import time
 from .combiner import Combiner
-from .env_util import get_api_key
+from .env_util import get_api_key, get_model
 from .select_models import select_model
 import os
 
+from prompt_toolkit import PromptSession
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.keys import Keys
+from prompt_toolkit.styles import Style
 console = Console()
-
 # Define your main color and related colors
 MAIN_COLOR = "#8B5CF6" 
 ACCENT_COLOR = "#00c8e2"         #   "#8e1c8e"
 USER_COLOR = "#1D5ACA"   
-
 def display_header():
     """
     Displays a modern SAGE ASCII art logo for the CLI tool.
@@ -51,14 +53,11 @@ def display_header():
     console.print("3. Type [cyan]model[/cyan] to select a model")
     console.print("4. Type [cyan]voice[/cyan] to use the voice mode")
     console.print("\n")
-
-
 def display_footer():
     ownership = Text("made by a brokie called ", style="bright_black")
     ownership.append("Fikre", style="magenta")
     ownership.append(" to not pay for cli tools", style="bright_black") # gray text
     width = console.width
-
     # Pad with spaces on the left
     ownership.pad_left(width - len(ownership.plain))
     console.print(ownership)
@@ -141,28 +140,71 @@ def chat():
             break
 
 def _get_user_input() -> str:
-    """Enter for new lines, empty line to submit"""
-    try:
-        console.print("[dim]Type your message. Empty line to submit.[/dim]")
-        lines = []
-        while True:
-            line = console.input(Text("│ " if lines else "> ", style="bold white"))
-            if not line and lines:  # Empty line submits
-                console.print()
-                return "\n".join(lines)
-            lines.append(line)
-    except (KeyboardInterrupt, EOFError):
-        return ""
+    """Multiline input. Submit with double Enter, Ctrl+J, or Ctrl+D."""
+    kb = KeyBindings()
+    
+    # Track the last Enter press time for double Enter detection
+    last_enter_time = [0]
+    ENTER_DOUBLE_THRESHOLD = 0.5  # seconds
 
+    @kb.add('enter')
+    def _(event):
+        current_time = time.time()
+        # If Enter was pressed recently enough, treat as double Enter and submit
+        if current_time - last_enter_time[0] < ENTER_DOUBLE_THRESHOLD:
+            event.app.exit(result=event.current_buffer.text)
+        else:
+            # Single Enter - just insert newline
+            event.current_buffer.insert_text('\n')
+            last_enter_time[0] = current_time
+
+    @kb.add('c-j')
+    def _(event):
+        event.app.exit(result=event.current_buffer.text)
+
+    @kb.add('c-d')
+    def _(event):
+        event.app.exit(result=event.current_buffer.text)
+
+    @kb.add('c-c')
+    def _(event):
+        raise KeyboardInterrupt
+
+    style = Style.from_dict({'prompt': f'bold {USER_COLOR}'})
+
+    session = PromptSession(
+        multiline=True,
+        key_bindings=kb,
+        style=style,
+        wrap_lines=True,
+        complete_while_typing=False,
+    )
+
+    try:
+        if not hasattr(_get_user_input, 'shown_hint'):
+            console.print("[dim]Type your message (multiline OK).[/dim]")
+            console.print("[dim]Press [cyan]Enter twice[/cyan] to send, or [cyan]Ctrl+J[/cyan] / [cyan]Ctrl+D[/cyan] if that fails.[/dim]")
+            _get_user_input.shown_hint = True
+
+        result = session.prompt("┃ ")
+        return result.strip() if result else ""
+    except KeyboardInterrupt:
+        raise
+    except EOFError:
+        return ""
 def _get_ai_response_with_spinner(user_message: str, combiner: Combiner) -> str:
     """Get AI response with a loading spinner."""
+    console.print(f"[bold cyan]🔹 Using model: {get_model()}[/bold cyan]")
+    console.print(f"[bold cyan]🔹 Sending request to OpenRouter...[/bold cyan]")
+
+    # now show spinner *only* while waiting
     with Status(
-        f"[bold {MAIN_COLOR}] Sage is thinking...[/bold {MAIN_COLOR}]", 
+        f"[bold {MAIN_COLOR}] Sage is thinking...[/bold {MAIN_COLOR}]",
         spinner="dots",
         spinner_style=MAIN_COLOR
-    ) as status:
+    ):
         response = combiner.get_ai_response(user_message)
-    
+
     return response
 
 def _display_ai_response(response: str):

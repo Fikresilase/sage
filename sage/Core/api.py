@@ -15,7 +15,7 @@ def send_to_openrouter(system_prompt: str, user_prompt: str) -> str:
         if not model:
             console.print("[red]x Error: MODEL not found in .env file[/red]")
             return "{}"
-        console.print(f"[bold cyan]🔹 Using model: {model}[/bold cyan]")
+        # console.print(f"[bold cyan]🔹 Using model: {model}[/bold cyan]")
         # Initialize OpenAI client with OpenRouter
         client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
@@ -31,7 +31,7 @@ def send_to_openrouter(system_prompt: str, user_prompt: str) -> str:
         # console.print(system_prompt)
         # console.print("\n[bold yellow] Full User Prompt Sent to AI:[/bold yellow]")
         # console.print(user_prompt)
-        console.print("\n[bold cyan]🔹 Sending request to OpenRouter...[/bold cyan]")
+        # console.print("\n[bold cyan]🔹 Sending request to OpenRouter...[/bold cyan]")
         completion = client.chat.completions.create(
             extra_headers={
                 "HTTP-Referer": "https://your-site.com",  # Update with your site
