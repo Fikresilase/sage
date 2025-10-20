@@ -8,7 +8,9 @@ dependencies = [
     "rich>=13.0.0",
     "inquirer>=3.0.0",
     "openai>=1.0.0",
-    "prompt_toolkit>=3.0.0"
+    "prompt_toolkit>=3.0.0",
+    "langchain>=0.0.300",
+    "langchain-openai>=0.0.13",
 ]
 
 [project.scripts]
