@@ -194,8 +194,8 @@ def _get_user_input() -> str:
         return ""
 def _get_ai_response_with_spinner(user_message: str, combiner: Combiner) -> str:
     """Get AI response with a loading spinner."""
-    console.print(f"[bold cyan]🔹 Using model: {get_model()}[/bold cyan]")
-    console.print(f"[bold cyan]🔹 Sending request to OpenRouter...[/bold cyan]")
+    # console.print(f"[bold cyan]🔹 Using model: {get_model()}[/bold cyan]")
+    # console.print(f"[bold cyan]🔹 Sending request to OpenRouter...[/bold cyan]")
 
     # now show spinner *only* while waiting
     with Status(

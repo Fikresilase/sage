@@ -20,11 +20,7 @@ class Combiner:
             if not interface_data:
                 return "x Error: Could not load project interface data. Please run setup first."
 
-            # Use two-step processing with interface data
-            console.print("\n" + "="*60)
-            console.print("[bold magenta]🚀 STARTING AI PROCESSING[/bold magenta]")
-            console.print("="*60)
-            
+            # Use two-step processing with interface data - NO CONSOLE.PRINT HERE
             ai_response_text = two_step_ai_processing(
                 interface_data=interface_data,
                 user_prompt=user_prompt,
@@ -36,10 +32,7 @@ class Combiner:
             
             # Check if response contains actions that need orchestrator processing
             if self._is_action_response(ai_response):
-                console.print("\n" + "="*50)
-                console.print("[bold blue]STEP 3: ACTION EXECUTION[/bold blue]")
-                console.print("="*50)
-                
+                # NO STEP 3 HEADER PRINT HERE - let the outer spinner handle it
                 orchestrator_response = self.orchestrator.process_ai_response(ai_response)
                 
                 # Always get results from dict (orchestrator now always returns dict)
@@ -171,31 +164,8 @@ Respond in the standard JSON format with:
         try:
             with open(interface_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                console.print("[green]✓ interface.json loaded successfully[/green]")
+                # Removed the success message to reduce noise
                 return data
         except Exception as e:
             console.print(f"[red]x Error loading interface.json: {e}[/red]")
             return None
-
-    def _format_conversation_history(self) -> str:
-        """Format conversation history for context"""
-        if not self.conversation_history:
-            return ""
-
-        history_parts = ["\n Conversation History:"]
-        for i, entry in enumerate(self.conversation_history[-3:], 1):
-            history_parts.append(f"Exchange {i+len(self.conversation_history)-3}:")
-            history_parts.append(f"  User: {entry['user']}")
-
-            if entry.get("pending", False):
-                history_parts.append(f"  Status: Action completed, waiting for AI update")
-            else:
-                ai_text = entry['ai'].get('text', 'No text response')
-                history_parts.append(f"  AI Response: {ai_text}")
-
-        return "\n".join(history_parts)
-
-def get_ai_response(user_prompt: str, api_key: str) -> str:
-    """Main entry point for getting AI responses"""
-    combiner = Combiner(api_key)
-    return combiner.get_ai_response(user_prompt)
