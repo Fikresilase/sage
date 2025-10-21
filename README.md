@@ -12,7 +12,7 @@
 ## ⬇️ How to Install
 
  ```
-pip install sage-cli
+pip install sage-code
 ```
 
 -	and then type 
