@@ -1,5 +1,5 @@
 # 🧙‍♂️ Sage: the senior dev in your terminal
-![Sage welcome page.](./public/sage_start_page.jpg "Sage welcome page snapshot.")
+![Sage welcome page.](./sage/public/sage_start_page.jpg "Sage welcome page snapshot.")
 ## 🤔 Why Sage?
 
 - Claude Code, Codex CLI, and Cursor are **hella expensive**.  
