@@ -46,3 +46,12 @@ dist/
 *.bak
 *.swp
 *.swo
+# PyCharm
+.idea/
+
+# MyPy type checker
+.mypy_cache/
+.dmypy.json
+
+# pip cache
+pip-log.txt

@@ -1,11 +1,17 @@
 [project]
-name = "sage"                        
-version = "0.1.0"
+name = "sage-cli"
+version = "0.1.1"
 description = "A senior developer in your terminal."
-authors = [{ name = "Fikresilase W. Abebayew", email = "shitubilbila@gmail.com" }]
 readme = "README.md"
-license = { text = "MIT" }
+authors = [{ name = "Fikresilase W. Abebayew", email = "shitubilbila@gmail.com" }]
 requires-python = ">=3.12"
+license = { text = "MIT" }
+keywords = ["cli", "ai", "assistant", "developer-tools","claude code alternative", "codex alternative", "open source", "productivity"]
+
+[project.urls]
+homepage = "https://github.com/Fikresilase/sage"
+repository = "https://github.com/Fikresilase/sage"
+bugtracker = "https://github.com/Fikresilase/sage/issues"
 
 dependencies = [
     "typer>=0.9.0",
@@ -21,3 +27,4 @@ sage = "sage.cli:main"
 [build-system]
 requires = ["setuptools>=61.0", "wheel", "build"]
 build-backend = "setuptools.build_meta"
+

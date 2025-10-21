@@ -111,7 +111,7 @@ def setup_sage(root_path: Path = Path(".")):
 
     if not has_sage_api_key:
         console.print(f"[{ACCENT_COLOR}]SAGE_API_KEY not found in .env file[/]")
-        sage_api_key = typer.prompt("Please enter your SAGE_API_KEY (input will be visible)")
+        sage_api_key = typer.prompt("Please enter your SAGE_API_KEY")
         
         if sage_api_key.strip():
             # Add SAGE_API_KEY to .env content
