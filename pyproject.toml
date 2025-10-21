@@ -1,6 +1,6 @@
 [project]
 name = "sage-cli"
-version = "0.1.1"
+version = "0.1.2"
 description = "A senior developer in your terminal."
 readme = "README.md"
 authors = [{ name = "Fikresilase W. Abebayew", email = "shitubilbila@gmail.com" }]
