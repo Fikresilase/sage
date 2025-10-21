@@ -31,12 +31,11 @@ sage
 - If you’re into papers and minimal math, the technique’s on [arXiv](https://arxiv.org/abs/2510.14881)
 - The code is minimalist by design.
 - Inside the sage folder, you’ll find:
-    ```
+```text
 sage/
 ├── Starters/   : sets up the project, initializes the protocol, and provides context  
 └── Core/       : handles the main agent orchestration and LLM communication 
-
-    ```
+```
 
 - Programming ideology? **Procedural spaghetti.**
 - **Trust me bro**  you can figure it out and customize it.
