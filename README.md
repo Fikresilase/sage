@@ -33,9 +33,9 @@ sage
 - Inside the sage folder, you’ll find:
     ```
 sage/
-├── Starters/   → sets up the project, initializes the protocol, and provides context  
-└── Core/       → handles the main agent orchestration and LLM communication 
- 
+├── Starters/   : sets up the project, initializes the protocol, and provides context  
+└── Core/       : handles the main agent orchestration and LLM communication 
+
     ```
 
 - Programming ideology? **Procedural spaghetti.**
