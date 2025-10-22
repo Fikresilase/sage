@@ -41,6 +41,8 @@ system_prompt = """
    - Use double quotes for all JSON strings.
    - Include EVERY file present in the tree. Do not omit files.
    - Use `"request": {"provide": {}}` sparingly — only when you truly cannot infer purpose/dependencies from name/path.
+   - if the there is no files in the json that means its a new project and threre is nothing to summerize so you just return the exact json that
+     you recieved with no changes at all.
 
 6. Examples (for clarity only; do not include these in the final output):
 {

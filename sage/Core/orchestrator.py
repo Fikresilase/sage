@@ -28,7 +28,7 @@ class Orchestrator:
                     
                     elif "edit" in request:
                         result = self._edit_file(file_path, request["edit"])
-                        program_results.append(f"✅ {file_path} edited successfully" if result else f"❌ Failed to edit {file_path}")
+                        program_results.append(f" {file_path} edited successfully" if result else f"❌ Failed to edit {file_path}")
                         actions_taken = True
                     
                     # ... other operations ...
@@ -54,7 +54,7 @@ class Orchestrator:
                 
                 # Execute all commands and capture ALL terminal output
                 for cmd in commands:
-                    console.print(f"[yellow]🚀 Executing: {cmd}[/yellow]")
+                    console.print(f"[yellow] Executing: {cmd}[/yellow]")
                     console.print("[dim]─" * 50 + "[/dim]")
                     
                     # Capture ALL terminal output for AI
@@ -73,7 +73,7 @@ class Orchestrator:
         except Exception as e:
             return {
                 "has_actions": True,
-                "results": f"❌ Error in orchestrator: {str(e)}"
+                "results": f" Error in orchestrator: {str(e)}"
             }
     
     def update_interface_json(self, new_interface_data: Dict[str, Any]):
