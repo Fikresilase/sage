@@ -34,7 +34,35 @@ class Orchestrator:
                     # ... other operations ...
             
             if "command" in ai_response:
-                # ... command logic ...
+                command_data = ai_response["command"]
+                
+                # Handle both string and object formats
+                if isinstance(command_data, str):
+                    # Simple string command
+                    commands = [command_data]
+                elif isinstance(command_data, dict) and "commands" in command_data:
+                    # Complex command object
+                    commands = command_data["commands"]
+                    platform = command_data.get("platform", "")
+                    terminal = command_data.get("terminal", "")
+                    
+                    if platform or terminal:
+                        console.print(f"[dim]Platform: {platform}, Terminal: {terminal}[/dim]")
+                else:
+                    # Fallback - treat as single command
+                    commands = [str(command_data)]
+                
+                # Execute all commands and capture ALL terminal output
+                for cmd in commands:
+                    console.print(f"[yellow]🚀 Executing: {cmd}[/yellow]")
+                    console.print("[dim]─" * 50 + "[/dim]")
+                    
+                    # Capture ALL terminal output for AI
+                    terminal_output = self._execute_command_and_capture_output(cmd)
+                    program_results.append(f"Command: {cmd}\n{terminal_output}")
+                    
+                    console.print("[dim]─" * 50 + "[/dim]")
+                
                 actions_taken = True
             
             return {
@@ -148,3 +176,53 @@ class Orchestrator:
                 return f"Error: {result.stderr}"
         except Exception as e:
             return f"Command execution failed: {str(e)}"
+
+    def _execute_command_with_display(self, command: str) -> str:
+        """Execute command with real-time terminal display"""
+        try:
+            # Direct passthrough to terminal - user sees everything
+            result = subprocess.run(
+                command, 
+                shell=True,
+                # No capture - output goes directly to terminal
+            )
+            
+            if result.returncode == 0:
+                return "Command completed successfully"
+            else:
+                return f"Error: Command failed with exit code {result.returncode}"
+                
+        except Exception as e:
+            return f"Command execution failed: {str(e)}"
+
+    def _execute_command_and_capture_output(self, command: str) -> str:
+        """Execute command and capture ALL terminal output for AI"""
+        try:
+            # Execute command and capture ALL output (both stdout and stderr)
+            result = subprocess.run(
+                command, 
+                shell=True, 
+                capture_output=True, 
+                text=True,
+                cwd=os.getcwd()
+            )
+            
+            # Combine both stdout and stderr to get EVERYTHING
+            full_output = ""
+            if result.stdout:
+                full_output += result.stdout
+            if result.stderr:
+                full_output += f"\n{result.stderr}"
+            
+            # Also display to user in real terminal
+            if result.stdout:
+                console.print(result.stdout)
+            if result.stderr:
+                console.print(f"[red]{result.stderr}[/red]")
+            
+            return full_output.strip() if full_output else "(No output)"
+                
+        except Exception as e:
+            error_msg = f"Command execution failed: {str(e)}"
+            console.print(f"[red]{error_msg}[/red]")
+            return error_msg
