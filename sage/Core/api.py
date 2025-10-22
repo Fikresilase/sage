@@ -38,7 +38,6 @@ class OpenRouterClient:
             return None
         
         try:
-            # REMOVED the console.print for model and sending request
             completion = self.client.chat.completions.create(
                 extra_headers={
                     "HTTP-Referer": "https://your-site.com",
@@ -51,11 +50,11 @@ class OpenRouterClient:
                 max_tokens=10000,
             )
             ai_response = completion.choices[0].message.content
-            # REMOVED the success message
             return ai_response.strip()
         except Exception as e:
             console.print(f"[red]x Error during API request: {e}[/red]")
-            return None
+            # Re-raise the exception to stop the process
+            raise e
 
 # Load the query transformer prompt
 query_transformer_prompt = QUERY_TRANSFORMER_PROMPT
@@ -64,8 +63,6 @@ def transform_query(interface_data: dict, user_prompt: str, transformation_promp
     """
     Step 1: Transform user prompt based on interface JSON schema
     """
-    # REMOVED all the step headers and status messages
-    
     if not interface_data:
         return user_prompt  # Return original prompt if no interface data
     
@@ -81,14 +78,14 @@ def transform_query(interface_data: dict, user_prompt: str, transformation_promp
     if transformed_prompt:
         return transformed_prompt
     else:
-        return user_prompt
+        # If we get here, it means _send_request returned None but didn't raise an exception
+        # This shouldn't happen with the new implementation, but keeping for safety
+        raise Exception("Query transformation failed - no response from API")
 
 def process_with_system_prompt(interface_data: dict, transformed_prompt: str, system_prompt: str) -> str:
     """
     Step 2: Send transformed prompt to AI with system prompt AND interface data
     """
-    # REMOVED all the step headers and status messages
-    
     client = OpenRouterClient()
     
     # Combine interface data with transformed prompt for the AI
@@ -108,12 +105,11 @@ User Request:
     if final_response:
         return final_response
     else:
-        return "{}"
+        # Similarly, raise exception if second step fails
+        raise Exception("AI processing failed - no response from API")
 
 def two_step_ai_processing(interface_data: dict, user_prompt: str, system_prompt: str, transformation_prompt: str = None) -> str:
     """Main two-step processing function"""
-    # REMOVED all the processing headers
-
     # Use default transformation prompt if not provided
     if transformation_prompt is None:
         transformation_prompt = query_transformer_prompt
