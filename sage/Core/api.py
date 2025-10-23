@@ -1,7 +1,6 @@
 from openai import OpenAI
 from rich.console import Console
 from .env_util import get_api_key, get_model
-from .prompts import QUERY_TRANSFORMER_PROMPT
 import json
 import os
 from pathlib import Path
@@ -38,6 +37,20 @@ class OpenRouterClient:
             return None
         
         try:
+            # Print what's being sent to the AI
+            console.print("\n[cyan]=== SENDING TO AI ===[/cyan]")
+            for message in messages:
+                role = message["role"]
+                content = message["content"]
+                console.print(f"[yellow]Role: {role}[/yellow]")
+                # Truncate very long content for readability
+                if len(content) > 1000:
+                    console.print(f"[white]Content: {content[:1000]}...[/white]")
+                    console.print(f"[white]... (content truncated, total length: {len(content)} characters)[/white]")
+                else:
+                    console.print(f"[white]Content: {content}[/white]")
+                console.print("[cyan]---[/cyan]")
+            
             completion = self.client.chat.completions.create(
                 extra_headers={
                     "HTTP-Referer": "https://your-site.com",
@@ -50,50 +63,33 @@ class OpenRouterClient:
                 max_tokens=10000,
             )
             ai_response = completion.choices[0].message.content
+            
+            # Print what's received from the AI
+            console.print("\n[green]=== RECEIVED FROM AI ===[/green]")
+            # Truncate very long responses for readability
+            if len(ai_response) > 1000:
+                console.print(f"[white]Response: {ai_response[:1000]}...[/white]")
+                console.print(f"[white]... (response truncated, total length: {len(ai_response)} characters)[/white]")
+            else:
+                console.print(f"[white]Response: {ai_response}[/white]")
+            console.print("[green]======================[/green]\n")
+            
             return ai_response.strip()
         except Exception as e:
             console.print(f"[red]x Error during API request: {e}[/red]")
             # Re-raise the exception to stop the process
             raise e
 
-# Load the query transformer prompt
-query_transformer_prompt = QUERY_TRANSFORMER_PROMPT
-
-def transform_query(interface_data: dict, user_prompt: str, transformation_prompt: str) -> str:
-    """
-    Step 1: Transform user prompt based on interface JSON schema
-    """
-    if not interface_data:
-        return user_prompt  # Return original prompt if no interface data
-    
+def single_step_ai_processing(interface_data: dict, user_prompt: str, system_prompt: str) -> str:
+    """Single-step processing function with interface data"""
     client = OpenRouterClient()
     
-    messages = [
-        {"role": "system", "content": transformation_prompt},
-        {"role": "user", "content": f"Interface: {json.dumps(interface_data, indent=2)}\n\nUser Prompt: {user_prompt}"}
-    ]
-    
-    transformed_prompt = client._send_request(messages)
-    
-    if transformed_prompt:
-        return transformed_prompt
-    else:
-        # If we get here, it means _send_request returned None but didn't raise an exception
-        # This shouldn't happen with the new implementation, but keeping for safety
-        raise Exception("Query transformation failed - no response from API")
-
-def process_with_system_prompt(interface_data: dict, transformed_prompt: str, system_prompt: str) -> str:
-    """
-    Step 2: Send transformed prompt to AI with system prompt AND interface data
-    """
-    client = OpenRouterClient()
-    
-    # Combine interface data with transformed prompt for the AI
+    # Combine interface data with user prompt
     full_user_content = f"""Project Interface:
 {json.dumps(interface_data, indent=2)}
 
 User Request:
-{transformed_prompt}"""
+{user_prompt}"""
     
     messages = [
         {"role": "system", "content": system_prompt},
@@ -105,36 +101,12 @@ User Request:
     if final_response:
         return final_response
     else:
-        # Similarly, raise exception if second step fails
         raise Exception("AI processing failed - no response from API")
-
-def two_step_ai_processing(interface_data: dict, user_prompt: str, system_prompt: str, transformation_prompt: str = None) -> str:
-    """Main two-step processing function"""
-    # Use default transformation prompt if not provided
-    if transformation_prompt is None:
-        transformation_prompt = query_transformer_prompt
-    
-    # Step 1: Transform the query
-    transformed_query = transform_query(
-        interface_data=interface_data,
-        user_prompt=user_prompt,
-        transformation_prompt=transformation_prompt
-    )
-    
-    # Step 2: Process with system prompt AND interface data
-    final_response = process_with_system_prompt(
-        interface_data=interface_data,
-        transformed_prompt=transformed_query,
-        system_prompt=system_prompt
-    )
-    
-    return final_response
 
 # Legacy function for backward compatibility
 def send_to_openrouter(system_prompt: str, user_prompt: str) -> str:
     """
     Send prompt to OpenRouter AI using OpenAI client.
-    (Single-step version for backward compatibility)
     """
     client = OpenRouterClient()
     

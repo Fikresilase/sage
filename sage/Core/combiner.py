@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from rich.console import Console
-from .api import send_to_openrouter, two_step_ai_processing, query_transformer_prompt
+from .api import send_to_openrouter, single_step_ai_processing
 from .orchestrator import Orchestrator
 from .prompts import SYSTEM_PROMPT
 
@@ -20,19 +20,17 @@ class Combiner:
             if not interface_data:
                 return "x Error: Could not load project interface data. Please run setup first."
 
-            # Use two-step processing with interface data - NO CONSOLE.PRINT HERE
-            ai_response_text = two_step_ai_processing(
+            # Use single-step processing with interface data
+            ai_response_text = single_step_ai_processing(
                 interface_data=interface_data,
                 user_prompt=user_prompt,
-                system_prompt=SYSTEM_PROMPT,
-                transformation_prompt=query_transformer_prompt
+                system_prompt=SYSTEM_PROMPT
             )
 
             ai_response = self._parse_ai_response(ai_response_text)
             
             # Check if response contains actions that need orchestrator processing
             if self._is_action_response(ai_response):
-                # NO STEP 3 HEADER PRINT HERE - let the outer spinner handle it
                 orchestrator_response = self.orchestrator.process_ai_response(ai_response)
                 
                 # Always get results from dict (orchestrator now always returns dict)
@@ -133,7 +131,7 @@ Respond in the standard JSON format with:
 - Any additional file operations if needed
 """
 
-        # Use direct API call for follow-up (no transformation needed)
+        # Use direct API call for follow-up
         ai_response_text = send_to_openrouter(
             system_prompt=SYSTEM_PROMPT,
             user_prompt=followup_prompt
@@ -164,7 +162,6 @@ Respond in the standard JSON format with:
         try:
             with open(interface_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                # Removed the success message to reduce noise
                 return data
         except Exception as e:
             console.print(f"[red]x Error loading interface.json: {e}[/red]")
