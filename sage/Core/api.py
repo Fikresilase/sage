@@ -44,11 +44,7 @@ class OpenRouterClient:
                 content = message["content"]
                 console.print(f"[yellow]Role: {role}[/yellow]")
                 # Truncate very long content for readability
-                if len(content) > 1000:
-                    console.print(f"[white]Content: {content[:1000]}...[/white]")
-                    console.print(f"[white]... (content truncated, total length: {len(content)} characters)[/white]")
-                else:
-                    console.print(f"[white]Content: {content}[/white]")
+                console.print(f"[white]Content: {content}[/white]")
                 console.print("[cyan]---[/cyan]")
             
             completion = self.client.chat.completions.create(
