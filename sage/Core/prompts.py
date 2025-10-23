@@ -65,7 +65,7 @@ if the json you get is empty file that means its a new project and u should star
 always provide a valid json response dont miss even a small nuances like commas or brackets Unescaped control characters (raw newlines) and unescaped backslashes are not allowed in string literals.
 6. Response Format
 Your response must be a single JSON object. You can only perform one of the following three actions at a time:
-1. you Reply to the user in three ways:
+1. you Reply to the user in three ways only in one of the three formats not both:
 {
   "text": "This is my response to the user."
 }
