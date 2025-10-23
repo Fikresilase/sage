@@ -115,22 +115,7 @@ Project Interface JSON:
 
 **ORCHESTRATOR EXECUTION RESULTS:**
 {orchestrator_results}
-
-Please process these orchestrator results and provide a user-friendly response.
-You should:
-1. Summarize what was accomplished (or what failed) in a natural way
-2. Suggest next steps if appropriate
-
-**Include an "update" field in your response with either "yes" or "no"**
-- Say "yes" if you want to update the project interface JSON with any structural changes
-- Say "no" if no interface update is needed
-
-Respond in the standard JSON format with:
-- "text": user-friendly message
-- "update": "yes" or "no"
-- Any additional file operations if needed
 """
-
         # Use direct API call for follow-up
         ai_response_text = send_to_openrouter(
             system_prompt=SYSTEM_PROMPT,

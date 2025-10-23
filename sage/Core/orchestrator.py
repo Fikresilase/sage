@@ -103,7 +103,7 @@ class Orchestrator:
             # Only change "update" from "yes" to empty string, keep everything else exactly as sent from AI
             if data_to_write.get("update") == "yes":
                 data_to_write["update"] = ""
-            
+                # data_to_write["text"] = "place holder text for your response"
             # Write the exact AI response (with only update field changed) to the file
             with open(self.interface_file, 'w', encoding='utf-8') as f:
                 json.dump(data_to_write, f, indent=2)
