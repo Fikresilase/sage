@@ -38,14 +38,14 @@ class OpenRouterClient:
         
         try:
             # Print what's being sent to the AI
-            console.print("\n[cyan]=== SENDING TO AI ===[/cyan]")
+            # console.print("\n[cyan]=== SENDING TO AI ===[/cyan]")
             for message in messages:
                 role = message["role"]
                 content = message["content"]
-                console.print(f"[yellow]Role: {role}[/yellow]")
+                # console.print(f"[yellow]Role: {role}[/yellow]")
                 # Truncate very long content for readability
-                console.print(f"[white]Content: {content}[/white]")
-                console.print("[cyan]---[/cyan]")
+                # console.print(f"[white]Content: {content}[/white]")
+                # console.print("[cyan]---[/cyan]")
             
             completion = self.client.chat.completions.create(
                 extra_headers={
@@ -61,14 +61,14 @@ class OpenRouterClient:
             ai_response = completion.choices[0].message.content
             
             # Print what's received from the AI
-            console.print("\n[green]=== RECEIVED FROM AI ===[/green]")
+            # console.print("\n[green]=== RECEIVED FROM AI ===[/green]")
             # Truncate very long responses for readability
-            if len(ai_response) > 1000:
-                console.print(f"[white]Response: {ai_response[:1000]}...[/white]")
-                console.print(f"[white]... (response truncated, total length: {len(ai_response)} characters)[/white]")
-            else:
-                console.print(f"[white]Response: {ai_response}[/white]")
-            console.print("[green]======================[/green]\n")
+            # if len(ai_response) > 1000:
+                # console.print(f"[white]Response: {ai_response[:1000]}...[/white]")
+                # console.print(f"[white]... (response truncated, total length: {len(ai_response)} characters)[/white]")
+            # else:
+                # console.print(f"[white]Response: {ai_response}[/white]")
+            # console.print("[green]======================[/green]\n")
             
             return ai_response.strip()
         except Exception as e:
