@@ -24,9 +24,7 @@ MAIN_COLOR = "#8B5CF6"
 ACCENT_COLOR = "#00c8e2"         #   "#8e1c8e"
 USER_COLOR = "#1D5ACA"   
 def display_header():
-    """
-    Displays a modern SAGE ASCII art logo for the CLI tool.
-    """
+    # """Display the header with logo and welcome message."""
     console.print()
     logo_text = [
         "     ███████╗       █████╗         ██████╗        ███████╗",
