@@ -45,5 +45,5 @@ Just ask Sage itself (no ChatGPT though).
  - fork the repo,and make it cooler
  - or just add up to my spaghetti.I’ll be around to merge your PRs.
 ## 📢 Final Words
-- Just the first version, built after work — so don’t be harsh on  babe.   
+- Just the first version, built after work, so don’t be harsh on  babe.   
 - Made with ❤️ by a brokie named Fikre.
